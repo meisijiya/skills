@@ -1,0 +1,215 @@
+# 02 · Checklist — 14 个 Harness 机制清单
+
+> 设计 / 评审 / 加新机制时,查这张表。每行:机制 / 为什么 / 在哪 / 如何验证。
+
+## 总表
+
+| # | 机制 | 为什么需要 | 在哪实现 | 验证方法 |
+|---|---|---|---|---|
+| 1 | **Agent Loop** | 一切的地基 | `agent_loop()` 函数 | 30 行能跑通 tool_use / tool_result |
+| 2 | **Tool Registry / Dispatch** | 加工具不改循环 | `TOOL_HANDLERS[name]` dict | 加 1 个工具 = 加 1 行 schema + 1 行 handler |
+| 3 | **Deferred Tool Loading** | 工具多了 prompt 爆炸 | `ToolSearch` + `DeferExecuteTool` 两步 | 加载 100 个工具,prompt 仍 < 1k tokens |
+| 4 | **Permission / Hooks** | 自主 vs 安全的边界 | `decide` → `resolve` → `run` 三段 | DENY 不可被 ASK 覆盖;default.deny |
+| 5 | **Context Compact** | 上下文总会满 | 四步管道 L1-L4 | 200k tokens 长会话不崩 |
+| 6 | **Memory System** | 跨会话知识 | workspace / user / remote 三层 | 重启后召回正确事实 |
+| 7 | **SubAgent / Team** | 单 Agent 顾不过来 | `fresh messages[]` + 邮箱 + 黑板 | 主 Agent 看不到子 Agent 推理细节 |
+| 8 | **Task System** | 大目标拆小任务 | `.tasks/<id>.json` + `blockedBy` | 跨重启任务图完整恢复 |
+| 9 | **MCP Connectors** | 外部能力接入 | `mcp__server__tool` 命名空间 | 工具池动态装配,host-side policy 生效 |
+| 10 | **Skills System** | 知识按需加载 | `SKILL.md` 目录 + 全文按需 | 启动 prompt 只含 name+description |
+| 11 | **Audit & Hash Chain** | 证据 + 防篡改 | JSONL append-only + SHA256 + head anchor | 任意条目篡改可检测;截断可检测 |
+| 12 | **Session & Runtime** | 长期活着 | create / resume / close + Sidecar | 关闭 runtime 不删 transcript |
+| 13 | **Multi-Provider Adapter** | Loop 稳定,provider 可换 | 协议 → 中性类型 → Loop | 换 provider Loop 一行不改 |
+| 14 | **Event-Driven Bus** | 扩展点统一 | subscribe(只读) + on(决策) | 落库/审计走 subscribe;拦截走 on |
+
+---
+
+## 详细说明(每机制一行原则 + 关键约束 + 反模式链接)
+
+### 1. Agent Loop
+
+**原则**:循环最小化,只做四件事——调模型、检查 tool_use、执行工具、追加结果。
+
+**关键约束**:
+- `stopReason` 不是退出信号——"模型不输出 tool_use"才是
+- 硬停止 fail-fast:`error` / `aborted` 不检查 followUp,直接 return
+- 流式渲染:`context.messages[last]` 原地替换,UI 实时更新
+
+**反模式**:把权限检查、日志、通知硬编码进循环体 → 用 hooks。
+
+### 2. Tool Registry / Dispatch
+
+**原则**:schema + handler + policy 三合一,单一真源。
+
+**关键约束**:
+- 未知工具 → 稳定 `ToolErrorCode`,不崩
+- 参数错误 → 运行时 schema 校验(不止靠模型)
+- 并发策略:任一工具 `executionMode: "sequential"` → 整批串行
+
+**反模式**:用 if-elif 分发工具调用 → 用 dispatch map。
+
+### 3. Deferred Tool Loading
+
+**原则**:工具先列目录,schema 用到再展开。
+
+**关键约束**:
+- 启动 prompt 只含 name + description(一行的 metadata)
+- 调用 `load_skill(name)` 才返回全文
+- session-scoped loaded cache,避免重复加载
+
+**反模式**:把 100 个工具的全 schema 塞进 system prompt。
+
+### 4. Permission / Hooks
+
+**原则**:三段式(政策 → 解析 → 执行),三态(allow/ask/deny),fail-closed。
+
+**关键约束**:
+- DENY 路径**不**调用 Approver——不可被覆盖
+- `default.deny`——未匹配 policy 的工具直接拒
+- WorkspaceScope 防三类逃逸:`..` / 绝对路径 / symlink
+
+**反模式**:用 Bash 首 token 决定权限(`cat /etc/passwd` 首词是 cat)。
+
+### 5. Context Compact
+
+**原则**:四步管道,信息损失和成本从低到高排。
+
+**关键约束**:
+- L1 工具结果截断 > L2 文件去重 > L3 历史修剪 > L4 摘要
+- 前三步零模型调用,只有 L4 才花钱
+- tool_use ↔ tool_result 配对保留,切点不能拆
+
+**反模式**:context 满了就全量摘要(贵且丢信息)。
+
+### 6. Memory System
+
+**原则**:三层所有权分离 + 召回是只读派生视图。
+
+**关键约束**:
+- workspace(项目事实)/ user(偏好)/ remote(profile)所有权清晰
+- 召回:scope → confidence → authority → dedupe → conflict → top-k → pack
+- 当前会话指令优先级最高,不能被 memory 覆盖
+
+**反模式**:把 transcript 复制成 memory。
+
+### 7. SubAgent / Team
+
+**原则**:上下文隔离 + 通信有边界。
+
+**关键约束**:
+- SubAgent:新 `messages[]`,只回最终文本,中间推理不污染主窗口
+- Team:邮箱 + 黑板 + 类型化协议,持久队友可跨任务
+- destructive 操作(remove_worktree)只能 host 调,模型看不见
+
+**反模式**:子 Agent 的所有 tool_call 都返回主窗口 → 上下文爆炸。
+
+### 8. Task System
+
+**原则**:文件持久化任务图 + 原子认领。
+
+**关键约束**:
+- `.tasks/<id>.json`,每个 task 是独立文件
+- `blockedBy` 边列表,两阶段构建(先 ID 再边)
+- `claim_task()` 加锁,失败回滚,不静默回 `WORKDIR`
+
+**反模式**:任务列表只在内存里,重启即丢。
+
+### 9. MCP Connectors
+
+**原则**:discovery → trust → call,主机拥有权限。
+
+**关键约束**:
+- 工具命名 `mcp__server__tool`,规范化防冲突
+- 不信任 MCP server 自报的 `readOnlyHint` / `destructiveHint`
+- host-side `MCP_HOST_POLICY` 显式 `(server, tool) → allow/confirm`
+- 错误编码成 `tool_result` 错误,不终止循环
+
+**反模式**:信任 MCP server 自报属性 → host 一定要 policy。
+
+### 10. Skills System
+
+**原则**:`SKILL.md` 目录 + 按需全文加载。
+
+**关键约束**:
+- frontmatter `name` + `description`(≤200 字符,触发条件必须显式)
+- 启动 prompt 只含 metadata;正文按需 `load_skill` 调用
+- description 必须说"做什么 + 何时用",否则 agent 不加载
+
+**反模式**:description 只写"Git helper"——agent 永远不加载。
+
+### 11. Audit & Hash Chain
+
+**原则**:append-only 证据流 + 防篡改。
+
+**关键约束**:
+- SHA256 哈希链:`entry.hash = SHA256(data + prev_hash)`
+- **额外 `audit.head` 锚点**(条数 + 链尾 hash)防删尾
+- 安全分级:BLOCKED / DESTRUCTIVE / HIGH_RISK / CAUTION / SAFE
+
+**反模式**:只算哈希链——任何合法前缀仍是合法链,删尾检测不到。
+
+### 12. Session & Runtime
+
+**原则**:逻辑会话可恢复,运行时必须重建。
+
+**关键约束**:
+- UI 不跑 agent——Electron main / renderer / preload 三层
+- Sidecar JSON-RPC over Unix Socket
+- 关闭 runtime 不删 transcript;resume 用 fresh adapter 重放
+- 多领域 RPC 路由(session / tool / memory / mcp / skill / automation)
+
+**反模式**:UI 直接调工具 → 权限边界崩塌。
+
+### 13. Multi-Provider Adapter
+
+**原则**:协议差异归一,Loop 只看中性类型。
+
+**关键约束**:
+- 中性类型:`ToolSpec(name, description, parameters)` / `ToolCall(id, name, arguments)` / `ModelTurn(text, tool_calls, raw_assistant)`
+- 两层适配:章节路径(Anthropic-compatible)+ mini harness 路径(协议归一)
+- 错误编码到流不抛异常
+- Prompt cache:Anthropic 三处打点 + rolling cache
+
+**反模式**:Loop 里硬编码 `tool_use_id` / `json.loads()` / Provider 特定字段。
+
+### 14. Event-Driven Bus
+
+**原则**:两条管道——subscribe(只读)vs on(可动手)。
+
+**关键约束**:
+- subscribe:不被 await,异步监听器自 catch,纯观察
+- on:await 读返回值,5 个决策点独占(`input` / `before_agent_start` / `context` / `tool_call` / `tool_result`)
+- fail-closed:`emitToolCall()` 无 try-catch,扩展崩了 block 工具
+
+**反模式**:subscribe 里写 `tool_call` 处理 → 静默命中不了。
+
+---
+
+## 决策树:从 0 设计的实施顺序
+
+```
+1. Agent Loop + Tool Dispatch (s01, s02)
+   ↓
+2. Permission / Hooks (s04)
+   ↓
+3. Context Compact + Memory (s08, s09)
+   ↓
+4. SubAgent + Task System (s06, s10)
+   ↓
+5. Skills System + MCP (s07, s14)
+   ↓
+6. Multi-Provider Adapter (provider-adapter)
+   ↓
+7. Session & Runtime + Audit (s07-session, s09+s23)
+   ↓
+8. Team / Multi-Agent (s13)
+   ↓
+9. Event-Driven Bus (M07)
+   ↓
+10. Production Check (04-production.md)
+```
+
+每步独立可验证,跑离线 mock 后跑真实 key。
+
+---
+
+引用与致谢:本清单综合 `shareAI-lab/learn-claude-code` 17 章机制、`meisijiya/learn-workbuddy` 24 章机制、`dg-ai-notes.pages.dev` Pi Agent M01-M10 + P01-P07。
