@@ -80,9 +80,11 @@ Harness = Tools + Knowledge + Observation + Action Interfaces + Permissions
 | **模型优化**(换基座 / SFT / RLHF) | +3–5% 任务成功率 | 月级工程量 + 大量 GPU + 重新评估管线 |
 | **Harness 优化**(改上下文管道 / 加权限 / 加 Loop 叠加) | **+14%** 端到端成功率 | 几天到几周;改几十行 dispatch / hooks |
 
-**Opus 4.5 案例**(WanLanglin §1.5 引用):在 SWE-Bench Verified 子集上,Anthropic 用 Opus 4.5 + Claude Code 风格的 Harness(含显式 planning + tool dispatch + audit log)做 harness-side ablation——纯模型层只换 Opus 4.5 baseline 的成功率为 ~62%;同样的 Opus 4.5 + 完整 Harness 达到 ~76%(+14 pp);而换成更大或更新的基座不调 Harness 收益 < 3 pp。
+**Opus 4.5 案例**(walkinglabs README §"The Model Is Smart" 引用):Anthropic 跑了一次受控实验——同一个 Opus 4.5 模型、同一个 prompt("build a 2D retro game editor"),**没有 Harness 时**,模型在 20 分钟里花了 \$9,产出不能跑;**有完整 Harness**(planner + generator + evaluator)时,模型在 6 小时里花了 \$200,产出真的能玩。模型没变,变的是 Harness。**该数字 walkinglabs README 单一来源,未交叉复现**——本仓库未独立复现该实验。
 
-> **数据来源:WanLanglin §1.5,单一来源,未交叉复现**——这两个数字来自 WanLanglin 逆向 Claude Code 512K LOC 后的复盘,本仓库尚未独立跑过 SWE-Bench 复现。引用时建议标注"WanLanglin 单一来源,未交叉复现"。
+**ROI 数字**(WanLanglin §1.5 引用):在 SWE-Bench Verified 子集上,Anthropic 用 Opus 4.5 + Claude Code 风格的 Harness(含显式 planning + tool dispatch + audit log)做 harness-side ablation——纯模型层只换 Opus 4.5 baseline 的成功率为 ~62%;同样的 Opus 4.5 + 完整 Harness 达到 ~76%(+14 pp);而换成更大或更新的基座不调 Harness 收益 < 3 pp。
+
+> **数据来源说明**:Opus 4.5 受控实验来自 `walkinglabs/learn-harness-engineering` README §The Model Is Smart(单一来源,未交叉复现);ROI 14% 数字来自 `WanLanglin/-awesome-cc-harness` §1.5(基于其对 Claude Code 512K LOC 的逆向复盘,本仓库未独立跑 SWE-Bench 复现)。引用时建议分别标注两者的来源。
 
 ## 三、什么是 Agent,什么不是 Agent
 
@@ -144,7 +146,7 @@ Agent 工程的全部复杂性,都来自这三对根本张力。理解它们,比
 
 ### 3 级 Harness 成熟度阶梯
 
-不是所有 Harness 工程都做到同一深度。WanLanglin §1.5 把 Harness 工程按"服务多少用户 / 多深治理"切成 3 级,每一级的核心动作不一样:
+不是所有 Harness 工程都做到同一深度。WanLanglin §13.1/13.2/13.3 把 Harness 工程按"服务多少用户 / 多深治理"切成 3 级,每一级的核心动作不一样:
 
 | 级别 | 形态 | 时间投入 | 核心动作 | 退出标准 |
 |---|---|---|---|---|
@@ -205,4 +207,4 @@ while True:
 
 ## 引用与致谢
 
-本范式提炼自 `shareAI-lab/learn-claude-code` (commit f9e8b280) README §"Where Agency Comes From"、§"The Mindshift"、§"Core Pattern";`meisijiya/learn-workbuddy` README §"Harness 总图"、§"三大根本矛盾"、§"Agent 角色分工";`dg-ai-notes.pages.dev` M02 三层架构、M03 Agent Loop、M07 事件驱动;`walkinglabs/learn-harness-engineering` L02 §Five-Subsystem;`WanLanglin/-awesome-cc-harness` §1.2 Three Pillars + §1.5 ROI 量化 + Implementation Tiers。
+本范式提炼自 `shareAI-lab/learn-claude-code` (commit f9e8b280) README §"Where Agency Comes From"、§"The Mindshift"、§"Core Pattern";`meisijiya/learn-workbuddy` README §"Harness 总图"、§"三大根本矛盾"、§"Agent 角色分工";`dg-ai-notes.pages.dev` M02 三层架构、M03 Agent Loop、M07 事件驱动;`walkinglabs/learn-harness-engineering` L02 §Five-Subsystem + README §"The Model Is Smart";`WanLanglin/-awesome-cc-harness` §1.2 Three Pillars + §1.5 ROI 量化 + §13.1/13.2/13.3 三级 Harness 成熟度阶梯。

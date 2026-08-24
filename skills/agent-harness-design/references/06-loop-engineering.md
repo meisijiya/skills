@@ -4,7 +4,7 @@
 
 ## 一句话 / 核心概念
 
-**Loop Engineering = 用系统提示让 Agent 自己跑起来**。不是写一个新的 if-else 调度器,而是在同一个 `while True` 内核上,塞入触发源、恢复机制、外部状态,让一个会话从"用户问一次答一次"变成"持续响应事件、定时跑任务、长时守护进程"。
+**Loop Engineering = 从手动驾驶到自动化循环**(Addy Osmani / walkinglabs L13)。不是写一个新的 if-else 调度器,而是在同一个 `while True` 内核上,塞入触发源(goal / timer / maker-checker / event)、恢复机制、外部状态,让一个会话从"用户问一次答一次"变成"持续响应事件、定时跑任务、长时守护进程"。
 
 Loop 不是 sub-agent 的别名。一个 Loop 还是一个 LLM + 一个 `messages[]`,只是触发它下一轮的源从"用户说话"扩展到"时间到了 / 外部事件来了 / 上轮结果还没好"。
 
