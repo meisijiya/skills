@@ -56,6 +56,20 @@
 - `grep tool_execution_start | wc -l` 与 `grep tool_execution_end | wc -l` 相等
 - Provider 429 时告警能触发
 
+### 5 层性能测量
+
+Agent 产品跑起来后,性能问题往往不在"模型变慢了",而在**渲染/调度/网络/IO**某一层阻塞。光看 token/sec 看不到真瓶颈。WanLanglin §6.6 给出 5 层测量堆叠,从细到粗逐层定位:
+
+| # | 测量层 | 工具 | 看什么 |
+|---|---|---|---|
+| 1 | **Headless Latency Profiler** | `headless_inspector` / eBPF tracing | 单次工具调用的真实耗时分解(模型 vs 网络 vs IO) |
+| 2 | **Frame Timing** | `performance.measure()` / Chrome DevTools | TUI / Web UI 的渲染帧率,主线程是否被工具回调阻塞 |
+| 3 | **FPS Tracker** | 自研 ring buffer / `requestAnimationFrame` | 持续滚动输出时帧率,目标是稳定 ≥ 30 fps |
+| 4 | **Perfetto** | Perfetto trace viewer | 多流(messages + tool_result + UI events)按时间线对齐,可对比两个 session |
+| 5 | **OpenTelemetry** | OTel SDK + Prometheus / Jaeger | 生产环境的跨服务追踪 + token 用量 + 错误率 |
+
+> **逐层降级**:模型慢了先看 #1(是不是 transport / serialization 阻塞);UI 卡了先看 #2(是不是消息回填阻塞了主线程);全链路慢先看 #5(trace 看哪个 span 最长)。不要一开始就上 #5——粒度太粗,定位不到根因。
+
 ## 轴 4 · 性能与成本
 
 **核心关注点**:Prompt cache 命中率、上下文截断、压缩阈值、并行工具执行、Skills 懒加载。
@@ -116,4 +130,4 @@ python3 scripts/verify.py
 
 ---
 
-引用与致谢:本检查清单综合 `dg-ai-notes.pages.dev` P07 准备上线、`shareAI-lab/learn-claude-code` s15 集成 harness、`meisijiya/learn-workbuddy` docs/security-boundaries.md。
+引用与致谢:本检查清单综合 `dg-ai-notes.pages.dev` P07 准备上线、`shareAI-lab/learn-claude-code` s15 集成 harness、`meisijiya/learn-workbuddy` docs/security-boundaries.md;`WanLanglin/-awesome-cc-harness` §6.6 五层性能测量。
