@@ -8,13 +8,28 @@ license: MIT
 
 **核心立场**:Agent = Model(LLM) + Harness(让模型能在某环境工作的操作系统)。Agency 来自模型训练,不是来自外部代码编排。一个能工作的 Agent 产品必须有完整的 Harness。
 
+## 高层视角选型表
+
+先把 Agent 系统拆成 5 个相互正交的子系统(walkinglabs L02),工程上的判断都从这张表开始。
+
+| 视角 | 看什么 | 用哪个 reference |
+|---|---|---|
+| **Prompt / 系统提示组装** | token 预算、Skills catalog、Memory 召回结果如何塞进 system message | [`02-checklist.md` §5 Context Compact](references/02-checklist.md) + [`02-checklist.md` §10 Skills System](references/02-checklist.md) |
+| **Context / 上下文工程** | 持久化、剪裁、替换、摘要四步管道;压缩阈值与滚动窗口 | [`02-checklist.md` §5](references/02-checklist.md) + [`04-production.md` §轴4 性能与成本](references/04-production.md) |
+| **Loop / 单进程循环** | `while True` 内核恒定、6 叠加层、4 silent costs | [`06-loop-engineering.md`](references/06-loop-engineering.md) + [`02-checklist.md` §1 Agent Loop](references/02-checklist.md) |
+| **Tools / 工具表面** | schema/handler/policy 三合一、并发调度、错误反传 | [`02-checklist.md` §2 §3](references/02-checklist.md) + [`03-antipatterns.md` L4 L5](references/03-antipatterns.md) |
+| **Orchestration / 多 Agent 图** | 节点、边、共享状态、路由规则;评审带宽与图的结构性失败 | [`07-graph-engineering.md`](references/07-graph-engineering.md) + [`02-checklist.md` §7 §8](references/02-checklist.md) |
+
+> **框架中立**:两个上游(walkinglabs 5 子系统 / WanLanglin 3 支柱)对视角的划分略有差异,但工程产出可一一对应——本表按本 skill 的 5 视角组织,引用源在 [`05-source-synthesis.md`](references/05-source-synthesis.md)。
+
 ## When to use
 
-触发此 skill 的三类场景:
+触发此 skill 的四类场景:
 
 1. **从 0 设计一个 Agent 产品/系统**——用户说"我要做一个 Agent"、"帮我设计这个 Agent 的架构"、"规划一个 Agent 团队"
 2. **评审/诊断已有 Agent 设计**——用户说"这个 Agent 设计得怎么样"、"为什么我的 Agent 不稳"、"这个架构有什么问题"
 3. **给已有 Agent 加新机制**——用户说"加多 Agent 协作"、"接 MCP"、"加记忆"、"加权限 Hook"、"加上下文压缩"
+4. **自动化 / 升级到图**——用户说"让 Agent 自己跑起来"、"我要 Loop 不是单次对话"、"把单 Agent 拆成多 Agent 团队"、"接 cron / webhook / 定时任务"
 
 **不**适用:纯模型训练/SFT/RLHF、纯 prompt engineering(无 harness 决策)、纯前端 UI 设计。
 
@@ -24,6 +39,7 @@ license: MIT
 2. 按你的场景,跳到 `## Workflow` 对应段,按步骤落地。
 3. 完成后用 [`references/03-antipatterns.md`](references/03-antipatterns.md) 自检,过完所有"❌ 不要做"清单。
 4. 上线前用 [`references/04-production.md`](references/04-production.md) 跑五轴检查(API / 错误 / 可观测 / 性能 / 安全)。
+5. 若涉及自动化 / Loop / 多 Agent 图 / 选 Frontier 产品范式,先读 [`references/06-loop-engineering.md`](references/06-loop-engineering.md) 或 [`references/07-graph-engineering.md`](references/07-graph-engineering.md);需要横向对比主流产品设计,看 [`references/08-frontier-designs.md`](references/08-frontier-designs.md)。
 
 ## Core paradigm
 
@@ -53,6 +69,37 @@ license: MIT
 ### 场景 A:从 0 设计一个 Agent 系统
 
 1. **明确目标域与边界**——这个 Agent 解决什么?不解决什么?(单域 vs 通用)
+
+   **会话生命周期 16 步**(参考 walkinglabs L02 README §Agent Session Lifecycle):每个 Agent 会话从启动到结束都走这条流水线;工程上各步分别对应 02-checklist 的不同机制。
+
+   ```text
+   START (1-5):
+     [1] Bootstrap
+     [2] Verify
+     [3] Open session
+     [4] Load context
+     [5] Seed plan/todos
+
+   SELECT (6-7):
+     [6] Listen
+     [7] Gate
+
+   EXECUTE (8-11):
+     [8] Model turn
+     [9] Tool dispatch
+     [10] Hooks (post-tool)
+     [11] Append messages
+
+   WRAP UP (12-16):
+     [12] Settle
+     [13] Audit
+     [14] Compact
+     [15] Continue
+     [16] End session
+   ```
+
+   对应 `## Quick start` 的 5 步:Quick Start 1-5 对应 START 1-5(心智与边界);Workflow 场景 A 步骤 2-8 对应 SELECT 6-7 + EXECUTE 8-11(工具/记忆/权限/上下文/审计);上线前 04-production 对应 WRAP UP 12-16(可观测/性能/安全)。
+
 2. **选择 Loop 形态**——单进程 vs Sidecar(Sidecar 适合桌面/服务端);CLI vs TUI vs Web vs GUI
 3. **设计 Tool Registry**——内部工具(只读→写→网络→执行)、Skills、MCP 三层合一,统一命名
 4. **定义 Memory 边界**——workspace(项目事实)/ user(偏好)/ remote(profile)三层,所有权清晰
@@ -85,10 +132,21 @@ license: MIT
 
 ## References
 
-按设计阶段递进,按需加载:
+按使用阶段递进,按需加载。
+
+### 先读
 
 - [`references/01-mindset.md`](references/01-mindset.md) — **必读**:Model + Harness 范式、三大根本张力(上下文 vs 信息 / 自主 vs 安全 / 成本 vs 复杂度)、内核+叠加 Loop、两条事件管道
+
+### 按需
+
 - [`references/02-checklist.md`](references/02-checklist.md) — 14 个机制清单(机制 / 为什么 / 在哪章 / 如何验证),从 0 设计与评审都查这张表
 - [`references/03-antipatterns.md`](references/03-antipatterns.md) — **20 个反模式**(错 / 对 / 为什么错),设计完成与加新机制后必跑自检
 - [`references/04-production.md`](references/04-production.md) — 产品化落地 5 轴(API 化 / 错误处理 / 可观测性 / 性能 / 安全),上线前必跑
-- [`references/05-source-synthesis.md`](references/05-source-synthesis.md) — 三个上游资源(learn-claude-code / learn-workbuddy / dg-ai-notes)的独有贡献 + 机制 × 来源映射表,做交叉校准用
+- [`references/06-loop-engineering.md`](references/06-loop-engineering.md) — 自动化 Loop:6 原语、4 silent costs、generator/evaluator 分离
+- [`references/07-graph-engineering.md`](references/07-graph-engineering.md) — 多 Agent 图:4 部件、3 结构性失败、orchestration tax
+- [`references/08-frontier-designs.md`](references/08-frontier-designs.md) — 4 个 Frontier 产品(Pi / Claude Code / Codex / DeepSeek)的横向对比与迁移清单
+
+### 延伸
+
+- [`references/05-source-synthesis.md`](references/05-source-synthesis.md) — 五个上游资源的独有贡献 + 机制 × 来源映射表 + 延伸阅读指针(Grove / Anti-Distillation),做交叉校准用
