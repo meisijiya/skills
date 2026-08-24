@@ -60,19 +60,20 @@
 - `grep tool_execution_start | wc -l` 与 `grep tool_execution_end | wc -l` 相等
 - Provider 429 时告警能触发
 
-### 5 层性能测量
+### 上下文四级压缩管道(WanLanglin §8 / §3.3)
 
-Agent 产品跑起来后,性能问题往往不在"模型变慢了",而在**渲染/调度/网络/IO**某一层阻塞。光看 token/sec 看不到真瓶颈。WanLanglin §6.6 给出 5 层测量堆叠,从细到粗逐层定位:
+Agent 产品跑起来后,token 增长是最常见的真实瓶颈——即使 1M context window 在长对话里也会被填满。WanLanglin §8 §3.3 给出**四级压缩管道**,从轻到重逐级触发,Claude Code 的实现就是这四级:
 
-| # | 测量层 | 工具 | 看什么 |
-|---|---|---|---|
-| 1 | **Headless Latency Profiler** | `headless_inspector` / eBPF tracing | 单次工具调用的真实耗时分解(模型 vs 网络 vs IO) |
-| 2 | **Frame Timing** | `performance.measure()` / Chrome DevTools | TUI / Web UI 的渲染帧率,主线程是否被工具回调阻塞 |
-| 3 | **FPS Tracker** | 自研 ring buffer / `requestAnimationFrame` | 持续滚动输出时帧率,目标是稳定 ≥ 30 fps |
-| 4 | **Perfetto** | Perfetto trace viewer | 多流(messages + tool_result + UI events)按时间线对齐,可对比两个 session |
-| 5 | **OpenTelemetry** | OTel SDK + Prometheus / Jaeger | 生产环境的跨服务追踪 + token 用量 + 错误率 |
+| # | 层级 | 名字 | 成本 / 延迟 | 触发时机 | 做什么 |
+|---|---|---|---|---|---|
+| 1 | 极轻 | **Snip**(历史截断) | 极低 / ~0ms | 每轮 | Feature-gated 历史截断;释放少量 token;几乎无延迟 |
+| 2 | 轻 | **Microcompact**(老化工具结果缩减) | 低 / ~1ms | 每轮 | 把 3 轮前的工具结果替换为 `[Previous: used {tool}]` 占位符;缓存压缩结果 |
+| 3 | 中 | **Context-Collapse**(读时投射) | 中 / ~5ms | 每轮 | 不修改消息数组,只在读取时按粒度排空可折叠上下文;低成本、渐进、可逆 |
+| 4 | 重 | **Autocompact**(LLM 全对话摘要) | 高 / ~2s | `> 50k tokens` 时才触发 | 保存完整 transcript 到磁盘,LLM 总结所有消息,用摘要替换;最重量级,释放最多空间 |
 
-> **逐层降级**:模型慢了先看 #1(是不是 transport / serialization 阻塞);UI 卡了先看 #2(是不是消息回填阻塞了主线程);全链路慢先看 #5(trace 看哪个 span 最长)。不要一开始就上 #5——粒度太粗,定位不到根因。
+**执行顺序**:`snip → micro → context-collapse → auto`。各级互不排斥,可组合运行。**Autocompact 是最后一道**,只在仍然超阈值时才触发——前三道全跑完都不够才动用。
+
+> **为什么不一次到位**:每一级都付出成本(延迟 / LLM 调用 / 信息损失),按"信息损失和成本"从低到高排序,先尝试最轻的层级,只到必要时才动用全对话摘要。**约束执行顺序**:源码注释道 Snip 必须先于 Microcompact 跑(`Apply snip before microcompact`),Snip 释放的 token 数必须传给 Autocompact 的阈值检查。
 
 ## 轴 4 · 性能与成本
 
@@ -136,4 +137,4 @@ python3 scripts/verify.py
 
 ## 引用与致谢
 
-本检查清单综合 `dg-ai-notes.pages.dev` P07 准备上线、`shareAI-lab/learn-claude-code` s15 集成 harness、`meisijiya/learn-workbuddy` docs/security-boundaries.md;`WanLanglin/-awesome-cc-harness` §6.6 五层性能测量。
+本检查清单综合 `dg-ai-notes.pages.dev` P07 准备上线、`shareAI-lab/learn-claude-code` s15 集成 harness、`meisijiya/learn-workbuddy` docs/security-boundaries.md;`WanLanglin/-awesome-cc-harness` §8 §3.3 四级压缩管道(Snip / Microcompact / Context-Collapse / Autocompact)。
