@@ -18,6 +18,14 @@ Order within the file follows upstream addition date (oldest first). When the li
 - **What it does**: Turns any codebase into a single-page interactive HTML course with scroll modules, animations, quizzes, and code↔plain-English side-by-side panels.
 - **Use when**: `"turn this into a course"`, `"explain this codebase interactively"`, `"teach me how this code works"`, `"interactive tutorial from this code"`.
 
+### dg-piagent
+
+- **Upstream**: buchidonggua (冬瓜), https://github.com/buchidonggua/dg-ai-notes/tree/main/skills/dg-piagent
+- **License**: `repo LICENSE is MIT (code) but README §License + CONTRIBUTING.md §License carve "文档" as CC-BY-SA-4.0; skills/dg-piagent/SKILL.md is "文档" by upstream's own definition; SKILL.md frontmatter has no `license:` field`
+- **Why not installed**: `This repo's contribution is a metadata pointer only — we ship zero verbatim prose and zero re-derivative content from upstream. Either form would touch the license gate: verbatim copy falls under upstream's CC-BY-SA-4.0 docs carve-out; re-derivation would still inherit the same source. Adopted federation pattern: agent-harness-design callouts route readers to install dg-piagent themselves for SDK-versioned work.`
+- **What it does**: SDK-development assistant for `@earendil-works/pi-coding-agent` v0.83.0 — given a pi-coding-agent task (build a DataAgent, scaffold a tool, wire extension hooks, evaluate an internal LLM endpoint, deploy as an SSE streaming service), dg-piagent returns executable code + API-precise configuration.
+- **Use when**: `"调用 pi-coding-agent SDK 直接干活"`, `"为 pi agent 加新的 tool"`, `"接 pi.on 或 session.subscribe 扩展点"`, `"评估自研 LLM 接入 pi-agent"`, `"把 pi agent 包成 SSE 流服务"`.
+
 ## How to add an entry
 
 - **Schema**: every block uses the same five fields in this order: Upstream, License, Why not installed, What it does, Use when. Don't add fields beyond the schema; the document stays scannable because every block carries the same shape. Stars, last-updated dates, installable alternatives, and local-copy placeholders are explicitly excluded; if any of them seem useful, the entry belongs in a different file.
