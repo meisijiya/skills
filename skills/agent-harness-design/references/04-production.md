@@ -86,13 +86,15 @@
 | Prompt injection | 工具结果 / 文件内容默认不可信;危险工具必须人类审批 |
 | 系统提示词净化 | `before_agent_start` 钩子链式覆盖 |
 | Fail-closed | `emitToolCall()` 无 try-catch,扩展崩了 block 工具 |
-| Key 管理 | `setRuntimeApiKey` 不落盘;4 种方式有明确优先级 |
+| Key 管理 | Key 不落盘;4 种方式有明确优先级 |
 | OS 级隔离 | 字符串 deny-list 只是安全带,生产必须 OS 沙盒(macOS App Sandbox / seccomp / 命名空间) |
+
+📦 **Federation**: For `pi-coding-agent` v0.83.0 API specifics (createAgentSession / defineTool / pi.on / session.subscribe / SSE streaming), install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.md`. Our skill stays vendor-neutral; `dg-piagent` stays SDK-versioned.
 
 **验收**:
 - 默认创建 session 后,内置 bash/write 不在白名单
 - 故意触发 `tool_call` 的 block,确认 `reason` 进了 LLM
-- `~/.pi/agent/auth.json` 不存在(Key 在内存)
+- Key 在内存(具体路径见上游 dg-piagent)
 
 ---
 

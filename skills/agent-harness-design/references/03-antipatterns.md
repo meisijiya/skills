@@ -152,9 +152,10 @@
 
 ### P5 · 用 `~/.pi/agent/SYSTEM.md` 当全局人设
 
-- ❌ **错**:把所有人设写进全局文件,影响所有项目
-- ✅ **对**:`systemPromptOverride`(代码层)+ `{cwd}/.pi/SYSTEM.md`(项目级)
-- 💥 **为什么错**:全局配置难追踪,跨项目污染
+- 系统提示词注入入口(具体路径见上游 dg-piagent)
+
+📦 **Federation**: For `pi-coding-agent` v0.83.0 API specifics (createAgentSession / defineTool / pi.on / session.subscribe / SSE streaming),
+install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.md`. Our skill stays vendor-neutral; `dg-piagent` stays SDK-versioned.
 
 ---
 

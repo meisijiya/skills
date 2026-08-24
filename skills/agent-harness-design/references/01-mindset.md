@@ -125,11 +125,13 @@ while True:
 
 1. **模型是大脑,Harness 是操作系统**——别把两者混在一起改
 2. **Loop 恒定,机制扩张**——加新功能永远通过 dispatch / hooks / prompt 注入
-3. **工具不抛异常,错误编码成消息**——`isError:true` 让模型自决
+3. **stream/provider 层不抛异常(发 `{ type: "error" }` 事件,M04);tool 层的 `execute` 应该 throw,pi-agent 自动转 `isError:true` 结果交 LLM 自己纠正(P05)**——错误编码进 stream 事件与 tool 结果两条路径并存
 4. **权限三态(allow/ask/deny),deny 永不弹窗**——安全边界是代码,不是 UI
 5. **信任模型但不信模型的输出**——校验在边界,信任在内部
 6. **证据流是 append-only,状态是派生**——JSONL + replay,不是数据库里塞状态
 
 ---
+
+📦 **Federation**: For `pi-coding-agent` v0.83.0 API specifics (createAgentSession / defineTool / pi.on / session.subscribe / SSE streaming), install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.md`. Our skill stays vendor-neutral; `dg-piagent` stays SDK-versioned.
 
 引用与致谢:本范式提炼自 `shareAI-lab/learn-claude-code` (commit f9e8b280) README §"Where Agency Comes From"、§"The Mindshift"、§"Core Pattern";`meisijiya/learn-workbuddy` README §"Harness 总图"、§"三大根本矛盾"、§"Agent 角色分工";`dg-ai-notes.pages.dev` M02 三层架构、M03 Agent Loop、M07 事件驱动。
