@@ -82,9 +82,9 @@ Harness = Tools + Knowledge + Observation + Action Interfaces + Permissions
 
 **Opus 4.5 案例**(walkinglabs README §"The Model Is Smart" 引用):Anthropic 跑了一次受控实验——同一个 Opus 4.5 模型、同一个 prompt("build a 2D retro game editor"),**没有 Harness 时**,模型在 20 分钟里花了 \$9,产出不能跑;**有完整 Harness**(planner + generator + evaluator)时,模型在 6 小时里花了 \$200,产出真的能玩。模型没变,变的是 Harness。**该数字 walkinglabs README 单一来源,未交叉复现**——本仓库未独立复现该实验。
 
-**ROI 数字**(WanLanglin §1.5 引用):在 SWE-Bench Verified 子集上,Anthropic 用 Opus 4.5 + Claude Code 风格的 Harness(含显式 planning + tool dispatch + audit log)做 harness-side ablation——纯模型层只换 Opus 4.5 baseline 的成功率为 ~62%;同样的 Opus 4.5 + 完整 Harness 达到 ~76%(+14 pp);而换成更大或更新的基座不调 Harness 收益 < 3 pp。
+**ROI 数字**(WanLanglin §1.5 引用):WanLanglin §1.5 引述 LangChain 公开案例——仅修改 Harness 架构(不换模型),在 **Terminal Bench 2.0** 上从 **52.8%** 提升到 **66.5%**(从 Top 30 跃升至 Top 5)。同表对比:仅做模型升级 +3-5%,两者结合 +18-20%。"模型是给定的,Harness 才是你能控制的。"
 
-> **数据来源说明**:Opus 4.5 受控实验来自 `walkinglabs/learn-harness-engineering` README §The Model Is Smart(单一来源,未交叉复现);ROI 14% 数字来自 `WanLanglin/-awesome-cc-harness` §1.5(基于其对 Claude Code 512K LOC 的逆向复盘,本仓库未独立跑 SWE-Bench 复现)。引用时建议分别标注两者的来源。
+> **数据来源说明**:Opus 4.5 受控实验来自 `walkinglabs/learn-harness-engineering` README §The Model Is Smart(单一来源,未交叉复现);Terminal Bench 2.0 上 52.8%→66.5% 数字来自 `WanLanglin/-awesome-cc-harness` §1.5 转引 LangChain 案例(单一来源,未交叉复现)。两段均为上游单一来源,本仓库未独立复现。引用时建议分别标注来源。
 
 ## 三、什么是 Agent,什么不是 Agent
 
