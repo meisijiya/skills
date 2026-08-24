@@ -65,7 +65,7 @@ license: MIT
 
 ### 场景 B:评审/诊断已有 Agent 设计
 
-1. **跑一遍反模式清单** [`references/03-antipatterns.md`](references/03-antipatterns.md)——**24 项过完**,标红项就是问题
+1. **跑一遍反模式清单** [`references/03-antipatterns.md`](references/03-antipatterns.md)——**20 项过完**,标红项就是问题
 2. **检查 Loop 是否恒定**——`while True` 是否被改写过?有没有 if-else 分支插在循环体?
 3. **检查 Tool Registry 是否单一真源**——schema/handler/policy 是否分开?有没有三处定义?
 4. **检查权限是否三段式**——decide / resolve / run 是否分开?是否有 DENY 被覆盖的可能?
@@ -89,6 +89,6 @@ license: MIT
 
 - [`references/01-mindset.md`](references/01-mindset.md) — **必读**:Model + Harness 范式、三大根本张力(上下文 vs 信息 / 自主 vs 安全 / 成本 vs 复杂度)、内核+叠加 Loop、两条事件管道
 - [`references/02-checklist.md`](references/02-checklist.md) — 14 个机制清单(机制 / 为什么 / 在哪章 / 如何验证),从 0 设计与评审都查这张表
-- [`references/03-antipatterns.md`](references/03-antipatterns.md) — **24 个反模式**(错 / 对 / 为什么错),设计完成与加新机制后必跑自检
+- [`references/03-antipatterns.md`](references/03-antipatterns.md) — **20 个反模式**(错 / 对 / 为什么错),设计完成与加新机制后必跑自检
 - [`references/04-production.md`](references/04-production.md) — 产品化落地 5 轴(API 化 / 错误处理 / 可观测性 / 性能 / 安全),上线前必跑
 - [`references/05-source-synthesis.md`](references/05-source-synthesis.md) — 三个上游资源(learn-claude-code / learn-workbuddy / dg-ai-notes)的独有贡献 + 机制 × 来源映射表,做交叉校准用
