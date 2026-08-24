@@ -36,6 +36,65 @@
 
 **反模式**:把权限检查、日志、通知硬编码进循环体 → 用 hooks。
 
+#### 7 Continue Sites
+
+WanLanglin §3.2 逆向 Claude Code 后总结出 7 个"模型可能中断、需要 Harness 兜底续跑"的站点。每个 Continue Site 都有触发条件 + 恢复动作:
+
+| # | Continue Site | 触发条件 | 恢复动作 |
+|---|---|---|---|
+| 1 | **Continue Site:上下文溢出** | `isContextOverflow()` 三重检测命中 | L1 截断 → L2 去重 → L3 修剪 → L4 摘要 → retry |
+| 2 | **Continue Site:Provider 429 / 5xx** | HTTP 状态码命中限流或服务端错误 | `auto_retry` 配 backoff,`maxRetries ≥ 3`;超限转 hard error |
+| 3 | **Continue Site:Tool 执行抛异常** | `execute()` 未被 catch | 转 `isError: true` 的 `ToolResultMessage`;不 throw 打断循环 |
+| 4 | **Continue Site:Provider 流断开** | SSE / WebSocket 连接中断 | `req.on("close")` → `session.abort()` + settled 标志防重入 |
+| 5 | **Continue Site:工具返回"不可恢复"** | 工具 schema 校验失败 / 致命资源缺失 | 注入错误事件 + 自动续跑一次;失败转 hard error |
+| 6 | **Continue Site:规划目标未满足** | `goal_gate` 评估 goal 未达成 | 注入 reason 自动续跑;`maxContinuations` 防死循环 |
+| 7 | **Continue Site:用户中途插队(steering)** | `steering` 队列非空 | 本轮结束后消费 steering,组装进下一轮 system prompt |
+
+> **共性**:每个 Continue Site 都有**触发条件 → 恢复动作 → 兜底降级**三层。前两层失败时必须有 hard error,不能让 Loop 静默卡住。Loop 本身的 `while True` 不能包含任何 Site 的判断逻辑——Site 全部通过 dispatch map / hooks / on() 注入。
+
+### 2. Tool Registry / Dispatch
+
+**原则**:schema + handler + policy 三合一,单一真源。
+
+**关键约束**:
+- 未知工具 → 稳定 `ToolErrorCode`,不崩
+- 参数错误 → 运行时 schema 校验(不止靠模型)
+- 并发策略:任一工具 `executionMode: "sequential"` → 整批串行
+
+**反模式**:用 if-elif 分发工具调用 → 用 dispatch map。
+
+#### 工具分区算法(partitionToolCalls)
+
+WanLanglin §3.4 逆向出的工具调度算法。模型一次返回 N 个 `tool_call`,Harness 需要把它们**切分到独立执行段**,每段内的工具并发,段间串行。
+
+```text
+partitionToolCalls(calls) → segments
+  while calls not empty:
+    group = []
+    for call in calls (in order):
+      if call.executionMode == "sequential":
+        if group non-empty: emit group; reset group
+        emit [call]   # 单独一段
+      else:           # default: parallel-safe
+        if call is read-only (no file mutation, no network write):
+          group.append(call)
+        else:          # write / destructive / sequential
+          if group non-empty: emit group; reset group
+          emit [call]
+    emit group (last segment)
+```
+
+**关键原则**:
+
+| 原则 | 含义 |
+|---|---|
+| **读并发,写串行** | 多个 read-only 工具可并行(同文件并发读安全);任意 write 必须独立段 |
+| **sequential 工具独占段** | `executionMode: "sequential"` 标记的工具(典型:`git_commit`、`npm install`、状态机类)必须独占一段,不与其他工具并发 |
+| **destructive 工具走 host helper** | `remove_worktree`、`drop_database` 这类不能暴露给模型 → 模型看不见,只能 host 调 |
+| **context modifier 延迟应用** | 工具结果改 context 的工具(如 `load_skill`、`compress_context`)放在段尾应用,避免前置工具读到旧 context |
+
+> **验证**:并发执行后,文件系统 / 数据库状态应该等价于任意串行顺序的结果。如果不,说明 partition 错了——读操作没真 read-only,或写操作没真独立。
+
 ### 2. Tool Registry / Dispatch
 
 **原则**:schema + handler + policy 三合一,单一真源。
