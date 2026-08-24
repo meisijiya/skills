@@ -34,6 +34,12 @@
 - ✅ **对**:`current_turn > workspace_override > user_default` 三层 authority
 - 💥 **为什么错**:检索相关性 ≠ 用户指令优先级
 
+### A6 · 上下文只塞 system prompt
+
+- ❌ **错**:把所有 Skills 全文 + 全部 memory + 长文档一次性塞进 system message,prompt 直接破 MB
+- ✅ **对**:Skills catalog(name + description 一行 metadata)进 prompt;Skills 全文用 `load_skill` 懒加载;Memory 按 scope 召回 top-k
+- 💥 **为什么错**:模型还没开始干活 OOM;长 prompt 注意力稀释,关键指令被冲淡(walkinglabs L04 §Context Engineering)
+
 ## 二、Loop 层(运行时)
 
 ### L1 · 让模型自报"任务完成"
@@ -65,6 +71,24 @@
 - ❌ **错**:工具实现里直接用系统 API
 - ✅ **对**:通过最小化的 Operations 接口(ReadOperations / WriteOperations / BashOperations)
 - 💥 **为什么错**:无法 Mock、无法远程执行、无法换容器环境
+
+### L6 · 让同一个模型做 maker 和 checker
+
+- ❌ **错**:同一个 LLM 既写代码又评审代码,或既生成又裁决("自评自")
+- ✅ **对**:Generator 与 Evaluator 分离——用更便宜的模型做 verifier,或用确定性的工具(Linter / type checker / test runner)做裁决
+- 💥 **为什么错**:模型对自己刚产出的输出有 confirmation bias;没有独立信号源,质量门形同虚设(walkinglabs L13 §Generator/Evaluator Separation)
+
+### L7 · Loop 上没有外部状态
+
+- ❌ **错**:Loop 纯在内存里跑,关掉 session 一切证据消失;模型说"做完了"你也无从查证
+- ✅ **对**:JSONL append-only transcript + SHA256 哈希链 + head anchor;事件全部落盘
+- 💥 **为什么错**:Verification Debt 累积——模型做错的成本全由用户承担,你没能力 replay;silent failure 不可见(walkinglabs L13 §Four Silent Costs 之 Verification Debt)
+
+### L8 · 多个 Loop 各自追自己的目标
+
+- ❌ **错**:两个 Loop(例如 Lead 与 Teammate)各自定义"完成",跑完各自声称 done,实际总目标未达
+- ✅ **对**:Shared goal + 独立 `goal_gate` 评估器,跨 Loop 的目标必须在外部黑板上同步,任一 Loop 的"完成"由总评估器裁决
+- 💥 **为什么错**:Goodhart / Conflict / Blindness Upward 三种结构性失败中的 Conflict——多目标冲突无人仲裁(walkinglabs L14 §Three Structural Failures)
 
 ## 三、上下文层(管理)
 
@@ -159,6 +183,24 @@ install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.
 
 ---
 
+## 六、Graph 层 (多 Agent 图)
+
+> 当 Agent 从单 Loop 升级为多 Agent 协作图,引入的不是"更多 Loop",而是**新的失败模式**。walkinglabs L14 把这一层单独切出来,因为图视角下的反模式跟 Loop 视角下不是同一类问题。
+
+### G1 · 把 prompt 调优等同于 loop 调优
+
+- ❌ **错**:模型答错就开始改 prompt,改 10 版还是同样的失败,没意识到是 loop 结构(goal / verify / feedback)错了
+- ✅ **对**:先分诊——是模型不知道(改 prompt / 加 memory)?做不到(改工具)?不愿做(改反馈)?调不通(改 loop)?再选对应杠杆
+- 💥 **为什么错**:把三层可调杠杆(prompt / tools / loop)当一层用,小杠杆撬大问题永远撬不动(walkinglabs L13 §The Six Primitives)
+
+### G2 · 评审带宽不够还硬加并行
+
+- ❌ **错**:为了"快"给同一任务开 5 个并行 Agent,每个都做完整推理,但你的注意力是串行的——评审只看得了 1 份
+- ✅ **对**:先评估"我的评审带宽 = 多少份 / 单位时间",并行 Agent 数 ≤ 评审带宽;多余的并行只是把同一份错误复刻 5 份
+- 💥 **为什么错**:Orchestration Tax——并行放大产出,但评审仍是串行资源;产出超出评审带宽的部分是负价值(walkinglabs L14 §Orchestration Tax)
+
+---
+
 ## 自检流程
 
 设计完成 / 加新机制后,按顺序跑:
@@ -170,4 +212,4 @@ install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.
 
 ---
 
-引用与致谢:本反模式清单综合 `shareAI-lab/learn-claude-code` 的 anti-patterns 表、`meisijiya/learn-workbuddy` docs/security-boundaries.md 与 24 章误区、`dg-ai-notes.pages.dev` M05-M07 + P05-P07 中的工程陷阱。
+引用与致谢:本反模式清单综合 `shareAI-lab/learn-claude-code` 的 anti-patterns 表、`meisijiya/learn-workbuddy` docs/security-boundaries.md 与 24 章误区、`dg-ai-notes.pages.dev` M05-M07 + P05-P07 中的工程陷阱;`walkinglabs/learn-harness-engineering` L04 §Context Engineering、L13 §The Six Primitives + §Four Silent Costs、L14 §Three Structural Failures + §Orchestration Tax。
