@@ -1,6 +1,6 @@
 ---
 name: agent-harness-design
-description: 指导 Agent 系统的工程化设计与产品化落地：核心范式、机制清单、反模式与上线检查。触发:做 Agent、设计/评审 Agent 架构、加新机制。
+description: 指导 Agent 系统的工程化设计与产品化落地：核心范式、14 机制、20 反模式、自动化 Loop 与多 Agent Graph、上线 5 轴。触发:做 Agent、设计/评审 Agent、加新机制、做自动化 Loop、升级到多 Agent 图。
 license: MIT
 ---
 
