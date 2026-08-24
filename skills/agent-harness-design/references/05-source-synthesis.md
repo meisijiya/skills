@@ -95,3 +95,7 @@
 - `dg-ai-notes.pages.dev`——把 Pi Agent SDK 的源码拆成 17 个可独立阅读的章节,补足生产视角
 - `walkinglabs/learn-harness-engineering`——把 Agent 工程抽象成 5 子系统 + Loop / Graph / Frontier 三视角,补充产品视角
 - `WanLanglin/-awesome-cc-harness`——逆向 Claude Code 512K LOC 给出 ROI 量化证据与 12 维竞品对比,补充工程化深度
+
+## 引用与致谢
+
+本文件的 5 个上游资源链接与归类,见正文 `## 五个资源定位对比`。所有内容均为重新表述,不复制上游逐字原文。每个上游的 commit 锚点已在 `## 引用约定` 与各文件末尾标注。

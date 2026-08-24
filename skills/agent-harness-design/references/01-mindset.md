@@ -197,4 +197,6 @@ while True:
 
 📦 **Federation**: For `pi-coding-agent` v0.83.0 API specifics (createAgentSession / defineTool / pi.on / session.subscribe / SSE streaming), install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.md`. Our skill stays vendor-neutral; `dg-piagent` stays SDK-versioned.
 
-引用与致谢:本范式提炼自 `shareAI-lab/learn-claude-code` (commit f9e8b280) README §"Where Agency Comes From"、§"The Mindshift"、§"Core Pattern";`meisijiya/learn-workbuddy` README §"Harness 总图"、§"三大根本矛盾"、§"Agent 角色分工";`dg-ai-notes.pages.dev` M02 三层架构、M03 Agent Loop、M07 事件驱动;`walkinglabs/learn-harness-engineering` L02 §Five-Subsystem;`WanLanglin/-awesome-cc-harness` §1.2 Three Pillars + §1.5 ROI 量化 + Implementation Tiers。
+## 引用与致谢
+
+本范式提炼自 `shareAI-lab/learn-claude-code` (commit f9e8b280) README §"Where Agency Comes From"、§"The Mindshift"、§"Core Pattern";`meisijiya/learn-workbuddy` README §"Harness 总图"、§"三大根本矛盾"、§"Agent 角色分工";`dg-ai-notes.pages.dev` M02 三层架构、M03 Agent Loop、M07 事件驱动;`walkinglabs/learn-harness-engineering` L02 §Five-Subsystem;`WanLanglin/-awesome-cc-harness` §1.2 Three Pillars + §1.5 ROI 量化 + Implementation Tiers。

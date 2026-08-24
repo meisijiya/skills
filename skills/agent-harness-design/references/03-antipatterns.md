@@ -212,4 +212,6 @@ install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.
 
 ---
 
-引用与致谢:本反模式清单综合 `shareAI-lab/learn-claude-code` 的 anti-patterns 表、`meisijiya/learn-workbuddy` docs/security-boundaries.md 与 24 章误区、`dg-ai-notes.pages.dev` M05-M07 + P05-P07 中的工程陷阱;`walkinglabs/learn-harness-engineering` L04 §Context Engineering、L13 §The Six Primitives + §Four Silent Costs、L14 §Three Structural Failures + §Orchestration Tax。
+## 引用与致谢
+
+本反模式清单综合 `shareAI-lab/learn-claude-code` 的 anti-patterns 表、`meisijiya/learn-workbuddy` docs/security-boundaries.md 与 24 章误区、`dg-ai-notes.pages.dev` M05-M07 + P05-P07 中的工程陷阱;`walkinglabs/learn-harness-engineering` L04 §Context Engineering、L13 §The Six Primitives + §Four Silent Costs、L14 §Three Structural Failures + §Orchestration Tax。

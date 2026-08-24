@@ -285,4 +285,6 @@ partitionToolCalls(calls) → segments
 
 ---
 
-引用与致谢:本清单综合 `shareAI-lab/learn-claude-code` 17 章机制、`meisijiya/learn-workbuddy` 24 章机制、`dg-ai-notes.pages.dev` Pi Agent M01-M10 + P01-P07。
+## 引用与致谢
+
+本清单综合 `shareAI-lab/learn-claude-code` 17 章机制、`meisijiya/learn-workbuddy` 24 章机制、`dg-ai-notes.pages.dev` Pi Agent M01-M10 + P01-P07;`WanLanglin/-awesome-cc-harness` §3.2 The Seven Continue Sites + §3.4 Tool Execution Orchestration。
