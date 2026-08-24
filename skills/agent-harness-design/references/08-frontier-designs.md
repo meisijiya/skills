@@ -93,24 +93,26 @@
 
 **适合**:多模型场景、对模型切换有需求的项目、需要快速实验不同 LLM 的研究团队。
 
-## 12 维 Claude Code vs Cursor vs Copilot
+## 12 维 Claude Code vs Cursor vs Copilot(WanLanglin §16.1)
 
-WanLanglin §16 把 Claude Code 与另外两个主流编码助手做 12 维对比。本节提炼维度本身,具体数值请回原文核对最新版本:
+WanLanglin §16.1 把 Claude Code / Cursor / GitHub Copilot 三个主流编码助手做 12 维对比。下方数据直接引自 §16.1(数据来源:dev.to/raxxostudios, faros.ai, tech-insider.org),引用前请回原文核对最新版本:
 
-1. Loop 形态 — generator-evaluator / generator-evaluator / while(单轮补全)
-2. 上下文压缩 — 主动(5 层管道) / 被动(滑动窗) / 滑动窗
-3. 工具权限 — allow/ask/deny 三态 / allow/ask/deny / 无(三态缺)
-4. 子 Agent 隔离 — 独立 `messages[]` / 共享黑板 / 无
-5. 持久记忆 — scope + retrieval + priority 三层 / scope + retrieval / 无
-6. Skills 加载 — 目录 + 全量 + 懒加载 / 全量 / 无
-7. MCP 集成 — 原生 / 桥接 / 不支持
-8. Hooks — 4 事件(PreToolUse / PostToolUse / UserPromptSubmit / Stop) / 仅 PreTool / 无
-9. 审计 — append-only + 哈希链 / 哈希链 / 无
-10. 协议适配 — 多 provider(Anthropic / OpenAI / DeepSeek) / 单 provider(自研) / 单 provider(OpenAI)
-11. 事件总线 — 订阅 / 决策两条管道分离 / 合并 / 合并
-12. 任务系统 — 文件持久化(.tasks/*.json) / 内存 / 无
+| 维度 | Claude Code | Cursor | GitHub Copilot |
+|---|---|---|---|
+| **运行环境** | 终端 CLI | VS Code fork | VS Code 扩展 |
+| **交互模式** | 自主 Agent | 协作编辑器 | 反应式自动补全 + Agent Mode |
+| **Agent Loop** | `while(true)` + 7 continue sites | 不公开 | 不公开 |
+| **工具系统** | 43+ 内置 + MCP 扩展 | 内置编辑 + 终端 | 内置编辑 + 终端 |
+| **权限模型** | 5 模式 + 7 级规则 + AI 分类器 | 编辑器级沙盒 | GitHub 权限 |
+| **Hook 系统** | 26 事件 × 4 类型 | 不公开 | 不公开 |
+| **上下文管理** | CLAUDE.md + 记忆 + 四级压缩 | .cursorrules + 代码库索引 | .github/copilot-instructions.md |
+| **多 Agent** | 5 种 Agent + Swarm 编排 | 8 并行 Agent(worktree) | 单 Agent |
+| **MCP 支持** | 6 种传输协议 | MCP 支持 | 有限 |
+| **开源可见度** | 源码可分析(512K LOC) | 闭源 | 闭源 |
+| **评估集成** | SWE-bench + Headless Profiler | 不公开 | 不公开 |
+| **市场份额(2026)** | 41% | ~15% | 38% |
 
-> **12 维视角的价值**:这 12 项不是简单的"谁有谁无",而是工程权衡的具体维度。**做自己的 Harness 时拿这张表对照**——你打算在哪几项上下注?哪几项可以外包?
+> **12 维视角的价值**:这 12 项不是简单的"谁有谁无",而是工程权衡的具体维度——每个维度背后都有 OpenDev 论文 / 源码逆向的市场验证或可观察的设计取舍。**做自己的 Harness 时拿这张表对照**——你打算在哪几项上下注?哪几项可以外包?Claude Code 在 Hook 系统、上下文管理、评估集成上对外可分析(512K LOC 全公开),适合"先学后改";Cursor 的代码库索引 + 8 并行 Agent 在编辑器内体验上更强;Copilot 仍在反应式补全 + Agent Mode 之间切换,跟 GitHub 权限紧绑。
 
 ## 5 子系统评分维度
 
