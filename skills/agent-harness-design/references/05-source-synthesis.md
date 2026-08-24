@@ -1,14 +1,16 @@
-# 05 · Source Synthesis — 三个上游资源的独有贡献
+# 05 · Source Synthesis — 五个上游资源的独有贡献
 
-> 本 skill 不是凭空写出来的,是从三个公开资源提炼融合而成。做交叉校准和引用时用。
+> 本 skill 不是凭空写出来的,是从五个公开资源提炼融合而成。做交叉校准和引用时用。
 
-## 三个资源定位对比
+## 五个资源定位对比
 
 | 资源 | 视角 | 章节数 | 形态 | 独有贡献 |
 |---|---|---|---|---|
 | `shareAI-lab/learn-claude-code` | **CLI Agent 教学** | 17 + 17(中/日) | 教程 + 教学代码 | 范式定义("Agency 来自模型")、17 个机制章节化、单进程 Loop 演进路径 |
 | `meisijiya/learn-workbuddy` | **桌面 Agent 工程** | 24 + docs | 教学代码 + 架构图 + 多 Provider | 六层架构、三大根本矛盾、Agent 角色分工、Sidecar 进程模型、多 Provider 适配、Hash Chain 审计 |
 | `dg-ai-notes.pages.dev` | **生产 SDK 源码学习** | 10(源码)+ 7(实战) | 文档 + 代码片段 | 三层架构(`pi-ai` / `pi-agent-core` / `pi-coding-agent`)、内核+叠加 Loop、两条事件管道、SDK 视角 21-multi-agent 模式(独立于 M07)、二开起步检查清单(SKILL.md) |
+| `walkinglabs/learn-harness-engineering` | **产品视角 Loop / Graph** | 14 节课 + 8 项目 + 15 种语言 | 教程 + 跨语言实现 | 5 子系统框架(Prompt / Context / Loop / Tools / Orchestration)、**会话生命周期 16 步**、**Loop Engineering (L13)**、**Graph Engineering (L14)**、**Frontier Designs**(Pi / Claude Code / Codex / DeepSeek) |
+| `WanLanglin/-awesome-cc-harness` | **逆向 Claude Code 512K LOC** | 16 章 | 源码逆向 + 工程化总结 | **3 大支柱**(Context / Tools / Loop)、**ROI 量化证据**(+14% harness vs +3-5% model)、**3 级 Harness 成熟度**(L1/L2/L3)、**7 Continue Sites**、**工具分区算法**、**12 维竞品对比**、Grove + Anti-Distillation 伦理视角 |
 
 ## 机制 × 来源映射(本 skill 的 14 个机制从哪来)
 
@@ -75,8 +77,19 @@
 本 skill 把他们导出去自己 install 上游;读者带着"想理解为什么这么设计"的需求进来,本 skill 就是
 归宿。两边都不试图做对方的事。
 
+## 延伸阅读
+
+**伦理 / 隐私视角,非工程必须,展开请读原文**。WanLanglin 仓库里有两份从 Claude Code 逆向出来的伦理 / 治理文档,跟本 skill 的工程视角互补但属于另一条脉络:
+
+- **`docs/zh/grove-system.md`** — Grove 系统:多用户 / 多 Agent 共享环境下的权限分层与审计拓扑。聚焦"谁能在什么上下文里看到什么"。
+- **`docs/zh/anti-distillation.md`** — Anti-Distillation:防止 Agent 的输出被用作训练数据蒸馏(尤其是企业私有知识)。聚焦"如何让模型输出不可被低成本复用"。
+
+> 这两份不在本 skill 的工程主线里。引用本 skill 做 Harness 设计时不需要读它们;但当项目涉及**共享环境 / 数据治理 / 合规边界**时,这两份是起步读物。本 skill 保持工程中立,这两份保持伦理中立,两边不互相覆盖。
+
 ## 致谢
 
 - `shareAI-lab/learn-claude-code`——作者团队把 Claude Code 的工程化教学做到了极致的清晰
 - `meisijiya/learn-workbuddy`——把桌面 Agent 的工程复杂度拆解成 24 个独立可学的机制
 - `dg-ai-notes.pages.dev`——把 Pi Agent SDK 的源码拆成 17 个可独立阅读的章节,补足生产视角
+- `walkinglabs/learn-harness-engineering`——把 Agent 工程抽象成 5 子系统 + Loop / Graph / Frontier 三视角,补充产品视角
+- `WanLanglin/-awesome-cc-harness`——逆向 Claude Code 512K LOC 给出 ROI 量化证据与 12 维竞品对比,补充工程化深度
