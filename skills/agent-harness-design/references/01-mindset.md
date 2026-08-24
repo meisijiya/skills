@@ -2,6 +2,42 @@
 
 > 本文件讲"为什么这么设计"而不是"怎么写代码"。读完 5 分钟,理解 Agent 工程的根本立场。
 
+## 视角选型
+
+Agent 工程的"视角"在不同上游里被切成不同形状。本 skill 用统一对照表把两个上游的视角合起来,做设计时先选视角再选 reference。
+
+### 5 子系统(walkinglabs L02)
+
+| # | 子系统 | 一句话 |
+|---|---|---|
+| 1 | **Prompt** | system message 的组装(token 预算、Skills catalog、Memory 召回) |
+| 2 | **Context** | 输入语料管理(持久化、剪裁、替换、摘要四步管道) |
+| 3 | **Loop** | 单进程循环控制(`while True` 内核 + 6 叠加层) |
+| 4 | **Tools** | 行动表面(schema/handler/policy 三合一 + 并发调度) |
+| 5 | **Orchestration** | 多 Agent 图(节点、边、共享状态、路由规则) |
+
+### 3 支柱(WanLanglin §1.2)
+
+| # | 支柱 | 核心问题 |
+|---|---|---|
+| 1 | **Context(上下文)** | 模型能"看到什么"——决定推理质量 |
+| 2 | **Tools(工具)** | 模型能"做什么"——决定行动力 |
+| 3 | **Loop(循环)** | 模型能"持续多久"——决定任务粒度 |
+
+> **两套视角的对应**:walkinglabs 的 5 子系统 ≈ WanLanglin 3 支柱 + Orchestration + Prompt 工程化层。`Prompt` 在 WanLanglin 视角里被吸收进 `Context`;`Orchestration` 在 WanLanglin 视角里被吸收进 `Tools`(tools-as-protocol)。
+
+### 何时看哪个 reference
+
+| 你卡在哪里 | 先看哪个 reference |
+|---|---|
+| 不知道从哪里开始 / 想统一心智 | [`01-mindset.md`](01-mindset.md)(本文件) |
+| 14 个机制哪些必须 / 怎么验 | [`02-checklist.md`](02-checklist.md) |
+| 已经做完,担心某个坑没踩 | [`03-antipatterns.md`](03-antipatterns.md) |
+| 想让 Agent 自己跑(cron/webhook/事件) | [`06-loop-engineering.md`](06-loop-engineering.md) |
+| 想把单 Agent 拆成多 Agent 团队 | [`07-graph-engineering.md`](07-graph-engineering.md) |
+| 想参考 Pi/Claude Code/Codex/DeepSeek 的取舍 | [`08-frontier-designs.md`](08-frontier-designs.md) |
+| 想做交叉校准 / 引用源标注 | [`05-source-synthesis.md`](05-source-synthesis.md) |
+
 ## 一、Agent = Model + Harness
 
 **Agency 来自模型训练,不是来自外部代码编排**。一个能工作的 Agent 产品 = Model(LLM)+ Harness(让模型工作的世界)。
@@ -28,6 +64,19 @@ Harness = Tools + Knowledge + Observation + Action Interfaces + Permissions
 ```
 
 但从工程视角,Harness 由 14 个核心机制组成——见 `02-checklist.md`。五元定义是"做什么",14 机制是"怎么做"。
+
+### 优化 ROI:模型 vs Harness
+
+模型训练昂贵,但 Harness 调优的 ROI 显著高于模型优化:
+
+| 优化方向 | 典型收益 | 成本量级 |
+|---|---|---|
+| **模型优化**(换基座 / SFT / RLHF) | +3–5% 任务成功率 | 月级工程量 + 大量 GPU + 重新评估管线 |
+| **Harness 优化**(改上下文管道 / 加权限 / 加 Loop 叠加) | **+14%** 端到端成功率 | 几天到几周;改几十行 dispatch / hooks |
+
+**Opus 4.5 案例**(WanLanglin §1.5 引用):在 SWE-Bench Verified 子集上,Anthropic 用 Opus 4.5 + Claude Code 风格的 Harness(含显式 planning + tool dispatch + audit log)做 harness-side ablation——纯模型层只换 Opus 4.5 baseline 的成功率为 ~62%;同样的 Opus 4.5 + 完整 Harness 达到 ~76%(+14 pp);而换成更大或更新的基座不调 Harness 收益 < 3 pp。
+
+> **数据来源:WanLanglin §1.5,单一来源,未交叉复现**——这两个数字来自 WanLanglin 逆向 Claude Code 512K LOC 后的复盘,本仓库尚未独立跑过 SWE-Bench 复现。引用时建议标注"WanLanglin 单一来源,未交叉复现"。
 
 ## 三、什么是 Agent,什么不是 Agent
 
@@ -87,6 +136,18 @@ Agent 工程的全部复杂性,都来自这三对根本张力。理解它们,比
 
 **三步零模型调用,最后一步才花钱**。可重读的(工具结果)优先压缩;摘要放最后。
 
+### 3 级 Harness 成熟度阶梯
+
+不是所有 Harness 工程都做到同一深度。WanLanglin §1.5 把 Harness 工程按"服务多少用户 / 多深治理"切成 3 级,每一级的核心动作不一样:
+
+| 级别 | 形态 | 时间投入 | 核心动作 | 退出标准 |
+|---|---|---|---|---|
+| **L1 Individual** | 1 个开发者 + 1 个 LLM 终端 | 1–2 小时 | 把单进程 Loop 跑通;1 个 prompt + 5 个工具 + 内存中的 memory | Loop 能稳定完成一个真实任务 |
+| **L2 Small team** | 3–10 个开发者 + 共享 harness repo | 1–2 天 | 加权限/Hooks、SubAgent、Task System、audit log、CI 上跑通 | 团队任何成员拉下来就能跑 |
+| **L3 Organization** | 全公司 + 多产品线 + 治理委员会 | 1–2 周 | 加 Multi-Provider Adapter、Skills 目录、MCP 适配、policy-as-code、可观测性 + 计费 | 多个产品线共享同一 Harness,变更通过 review |
+
+> **判断**:L1 是工程,L2 是工程 + 协作,L3 是工程 + 治理 + 商业。多数 Agent 项目死在 L1 → L2 的过渡——把个人脚本"团队化"时,Loop 边界、工具并发、权限政策需要重写一遍。预算上 L2 比 L1 贵 10×,L3 比 L2 贵 5×。
+
 ## 五、内核 + 叠加:Loop 的工程哲学
 
 **Loop 内核只有 10 行**:
@@ -134,4 +195,4 @@ while True:
 
 📦 **Federation**: For `pi-coding-agent` v0.83.0 API specifics (createAgentSession / defineTool / pi.on / session.subscribe / SSE streaming), install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.md`. Our skill stays vendor-neutral; `dg-piagent` stays SDK-versioned.
 
-引用与致谢:本范式提炼自 `shareAI-lab/learn-claude-code` (commit f9e8b280) README §"Where Agency Comes From"、§"The Mindshift"、§"Core Pattern";`meisijiya/learn-workbuddy` README §"Harness 总图"、§"三大根本矛盾"、§"Agent 角色分工";`dg-ai-notes.pages.dev` M02 三层架构、M03 Agent Loop、M07 事件驱动。
+引用与致谢:本范式提炼自 `shareAI-lab/learn-claude-code` (commit f9e8b280) README §"Where Agency Comes From"、§"The Mindshift"、§"Core Pattern";`meisijiya/learn-workbuddy` README §"Harness 总图"、§"三大根本矛盾"、§"Agent 角色分工";`dg-ai-notes.pages.dev` M02 三层架构、M03 Agent Loop、M07 事件驱动;`walkinglabs/learn-harness-engineering` L02 §Five-Subsystem;`WanLanglin/-awesome-cc-harness` §1.2 Three Pillars + §1.5 ROI 量化 + Implementation Tiers。
