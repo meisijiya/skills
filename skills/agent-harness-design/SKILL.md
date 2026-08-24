@@ -10,17 +10,17 @@ license: MIT
 
 ## 高层视角选型表
 
-先把 Agent 系统拆成 5 个相互正交的子系统(walkinglabs L02),工程上的判断都从这张表开始。
+先把 Agent 系统拆成 5 个相互正交的子系统(walkinglabs L02 §"What a Harness Actually Is"),工程上的判断都从这张表开始。
 
 | 视角 | 看什么 | 用哪个 reference |
 |---|---|---|
-| **Prompt / 系统提示组装** | token 预算、Skills catalog、Memory 召回结果如何塞进 system message | [`02-checklist.md` §5 Context Compact](references/02-checklist.md) + [`02-checklist.md` §10 Skills System](references/02-checklist.md) |
-| **Context / 上下文工程** | 持久化、剪裁、替换、摘要四步管道;压缩阈值与滚动窗口 | [`02-checklist.md` §5](references/02-checklist.md) + [`04-production.md` §轴4 性能与成本](references/04-production.md) |
-| **Loop / 单进程循环** | `while True` 内核恒定、6 叠加层、4 silent costs | [`06-loop-engineering.md`](references/06-loop-engineering.md) + [`02-checklist.md` §1 Agent Loop](references/02-checklist.md) |
-| **Tools / 工具表面** | schema/handler/policy 三合一、并发调度、错误反传 | [`02-checklist.md` §2 §3](references/02-checklist.md) + [`03-antipatterns.md` L4 L5](references/03-antipatterns.md) |
-| **Orchestration / 多 Agent 图** | 节点、边、共享状态、路由规则;评审带宽与图的结构性失败 | [`07-graph-engineering.md`](references/07-graph-engineering.md) + [`02-checklist.md` §7 §8](references/02-checklist.md) |
+| **Instructions / 指令体系** | `AGENTS.md` / `CLAUDE.md` / `.cursorrules` 等仓库即规范文件;规则优先级与可变层数 | [`02-checklist.md` §10 Skills System](references/02-checklist.md) + [`02-checklist.md` §1 Agent Loop](references/02-checklist.md) |
+| **Tools / 工具表面** | schema/handler/policy 三合一、并发调度、错误反传、MCP 接入 | [`02-checklist.md` §2 §3](references/02-checklist.md) + [`03-antipatterns.md` L4 L5](references/03-antipatterns.md) |
+| **Environment / 环境** | 运行时(本地 / 容器 / Worktree)、依赖锁(pyproject.toml / package.json)、版本固定(.nvmrc / .python-version)、可复现性 | [`02-checklist.md` §1](references/02-checklist.md) + [`04-production.md` §轴5 安全与权限](references/04-production.md) |
+| **State / 状态** | 会话 transcript、跨重启的事实、进度文件、append-only 持久化与 head anchor | [`02-checklist.md` §6 Memory System](references/02-checklist.md) + [`03-antipatterns.md`](references/03-antipatterns.md) |
+| **Feedback / 反馈** | 验证命令(test / lint / type-check)、Goal/Evaluator 分离、独立评估器 | [`02-checklist.md` §5](references/02-checklist.md) + [`06-loop-engineering.md` §Generator/Evaluator](references/06-loop-engineering.md) |
 
-> **框架中立**:两个上游(walkinglabs 5 子系统 / WanLanglin 3 支柱)对视角的划分略有差异,但工程产出可一一对应——本表按本 skill 的 5 视角组织,引用源在 [`05-source-synthesis.md`](references/05-source-synthesis.md)。
+> **框架中立**:两个上游(walkinglabs L02 五子系统 / WanLanglin §1.2 三大支柱)对视角的划分不同——walkinglabs 强调"哪些设施决定了 Agent 的能力实现率",WanLanglin 强调"该把工程时间投到哪几块";本表用 walkinglabs 的五子系统组织路由,引用源在 [`05-source-synthesis.md`](references/05-source-synthesis.md)。
 
 ## When to use
 

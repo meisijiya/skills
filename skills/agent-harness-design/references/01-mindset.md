@@ -6,25 +6,31 @@
 
 Agent 工程的"视角"在不同上游里被切成不同形状。本 skill 用统一对照表把两个上游的视角合起来,做设计时先选视角再选 reference。
 
-### 5 子系统(walkinglabs L02)
+### 5 子系统(walkinglabs L02 §"What a Harness Actually Is")
 
-| # | 子系统 | 一句话 |
+walkinglabs L02 给出 Harness 的精确定义:**A harness consists of five subsystems: instructions, tools, environment, state, and feedback**。每个子系统有清晰的责任与评估标准。
+
+| # | 子系统 | 责任 |
 |---|---|---|
-| 1 | **Prompt** | system message 的组装(token 预算、Skills catalog、Memory 召回) |
-| 2 | **Context** | 输入语料管理(持久化、剪裁、替换、摘要四步管道) |
-| 3 | **Loop** | 单进程循环控制(`while True` 内核 + 6 叠加层) |
-| 4 | **Tools** | 行动表面(schema/handler/policy 三合一 + 并发调度) |
-| 5 | **Orchestration** | 多 Agent 图(节点、边、共享状态、路由规则) |
+| 1 | **Instructions / 指令体系** | 仓库即规范——`AGENTS.md` / `CLAUDE.md` / `.cursorrules` 等结构化指令文件承载规则与约束 |
+| 2 | **Tools / 工具** | 模型与外部世界的唯一接口——文件 I/O、Shell、网络、数据库、MCP 接入 |
+| 3 | **Environment / 环境** | 可复现的运行时——依赖锁、运行时版本、Docker / devcontainer、隔离沙箱 |
+| 4 | **State / 状态** | 跨会话/跨进程的事实——进度文件、append-only transcript、问题跟踪器 |
+| 5 | **Feedback / 反馈** | 验证闭环——test / lint / type-check / 独立评估器,Goal 完成判断的依据 |
+
+> **判定哪个最值得投**:walkinglabs 的实验方法——固定模型,逐个移除 5 个子系统,看哪个移除造成最大性能跌幅。最大跌幅的就是当前任务最该补的子系统。**通常 Feedback 投资最少回报最高**(L02 §总结);先把验证命令写对,再补其他 4 个。
 
 ### 3 支柱(WanLanglin §1.2)
 
+WanLanglin §1.2 把 Harness Engineering 拆成三根支柱,核心问题是"该把工程时间投到哪几块":
+
 | # | 支柱 | 核心问题 |
 |---|---|---|
-| 1 | **Context(上下文)** | 模型能"看到什么"——决定推理质量 |
-| 2 | **Tools(工具)** | 模型能"做什么"——决定行动力 |
-| 3 | **Loop(循环)** | 模型能"持续多久"——决定任务粒度 |
+| 1 | **Context Engineering(上下文工程)** | "Agent 无法在上下文中访问的信息不存在"——静态上下文 + 动态上下文 + 四级压缩管道 |
+| 2 | **Architectural Constraints(架构约束)** | 通过机械执行而非建议建立边界——依赖层级、确定性 Linter、LLM-based auditor、pre-commit hooks |
+| 3 | **Entropy Management(熵管理)** | 定期清理 Agent 解决代码退化——文档一致性验证、约束违规扫描、模式强制执行、依赖审计 |
 
-> **两套视角的对应**:walkinglabs 的 5 子系统 ≈ WanLanglin 3 支柱 + Orchestration + Prompt 工程化层。`Prompt` 在 WanLanglin 视角里被吸收进 `Context`;`Orchestration` 在 WanLanglin 视角里被吸收进 `Tools`(tools-as-protocol)。
+> **两套视角的差异**:walkinglabs L02 的 5 子系统按"基础设施构成"切——是设施视角;WanLanglin §1.2 的 3 支柱按"工程时间投入"切——是预算视角。walkinglabs 的 `Feedback` ≈ WanLanglin 三支柱的合集(`Constraints` 提供静态验证 + `Entropy` 提供定期清理);walkinglabs 的 `Instructions` 主要落在 `Context Engineering` 的"静态上下文"半边。引用前请保持两套词汇不混用。
 
 ### 何时看哪个 reference
 
