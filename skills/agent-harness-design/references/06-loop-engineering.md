@@ -83,3 +83,25 @@ Loop 工程跑久了会**悄悄欠下 4 种债**,不像 bug 那么明显,但累�
 ## 引用与致谢
 
 本文件提炼自 `walkinglabs/learn-harness-engineering` L13 §The Six Primitives of a Loop + §Four Silent Costs + §Generator/Evaluator Separation;`WanLanglin/-awesome-cc-harness` §3.2 The Seven Continue Sites(与本文件互补——Continue Site 是"Loop 中断如何续",Silent Cost 是"Loop 长期会欠什么")。所有内容均为重新表述,不复制上游逐字原文。
+
+## 附录 · Loop 工程的 5 个常见误解
+
+**误解 1:Loop 就是 cron 跑 Agent**
+
+- 错。Loop 不是"每隔 N 分钟问模型一次",而是"事件触发 + 持续状态 + 自动续跑"。纯 cron 缺乏 Continue Sites 的恢复机制,跑几次后必然卡死。
+
+**误解 2:Loop 越多越好**
+
+- 错。Loop 数与可观测性成反比。3 个 Loop + 清晰黑板比 30 个 Loop + 隐式共享 state 更可控。
+
+**误解 3:Loop 工程的瓶颈是模型**
+
+- 错。瓶颈通常是 External State 的写入路径——append-only JSONL + head anchor 在并发 Loop 下成为热点。L1 → L3 升级时这个瓶颈最先出现。
+
+**误解 4:Loop 一旦跑通就不需要改**
+
+- 错。Loop 是"模型 + Harness"的反复摩擦面——模型升级、provider 切换、新工具接入都会让 Loop 出问题。每周至少看一次 transcript。
+
+**误解 5:Loop 工程没有 ROI**
+
+- 错。Loop 工程的 ROI 在"重复任务被自动化 + 人不在场也能产出"。计算方式:每周节省的人时 × 时薪 - Loop 维护成本 = 周净收益。如果收益 < 0,撤掉 Loop,别硬撑。

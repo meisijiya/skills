@@ -139,3 +139,38 @@ WanLanglin §16 把 Claude Code 与另外两个主流编码助手做 12 维对�
 ## 引用与致谢
 
 本文件综合 `walkinglabs/learn-harness-engineering` `frontier-designs/` 目录下对 Pi / Claude Code / Codex / DeepSeek 的逐个分析;`WanLanglin/-awesome-cc-harness` §16 12 维竞品对比(Claude Code vs Cursor vs Copilot)。所有内容均为观察提炼与重新表述,不复制上游逐字原文,引用前请核对各产品最新状态(API 演进快,2026-08 后可能有变动)。
+
+## 附录 · 选型决策树
+
+从需求出发选产品的最小决策路径:
+
+```
+Q1: 你需要极致定制内核?
+  YES → Pi (或自研,基于 Pi 的 minimal core 思路)
+  NO  → Q2
+
+Q2: 你的任务以代码为主,且需要 PR 评审流程?
+  YES → Codex (worktree + AGENTS.md 范式)
+  NO  → Q3
+
+Q3: 你需要频繁切换多个 LLM provider?
+  YES → DeepSeek (multi-provider 原生 + capability seam)
+  NO  → Q4
+
+Q4: 你需要企业级安全/审计/治理?
+  YES → Claude Code (5 层压缩 + 哈希链 + 三态权限 + 完整事件总线)
+  NO  → 任意一个都行,看团队偏好
+```
+
+> **决策树不是推荐**——它只是把 4 个产品的核心取舍映射到 4 个常见需求。如果你的需求不在 Q1-Q4,可能需要回到 [`02-checklist.md`](../02-checklist.md)的 14 机制清单,自己选哪些机制要、要哪些机制不要,然后看哪个产品最匹配你的需求组合。
+
+## 附录 · 自研 Harness 时怎么用本节
+
+如果你的目标是"不直接用某个产品,而是从它们身上学设计",本节的用法:
+
+1. **用 12 维表做自评**——你打算实现的 Harness,12 项里打算做哪几项?写到设计文档
+2. **用 4 个产品段做参考实现**——每项设计查对应产品的实现,看它怎么权衡
+3. **用 5 子系统评分维度做查漏**——你的设计里哪几项低于 3 分?要不要补?
+4. **用迁移清单做取舍**——能"学到"的机制 vs "该学"的机制,后者才是你要做的
+
+> **核心告诫**:**不要为了对齐某个产品而做错自己的 Harness**。每个产品的设计背后都有它的产品定位与历史包袱。直接复制某个机制到自己的 Harness 上,常常因为 context 不同而水土不服。

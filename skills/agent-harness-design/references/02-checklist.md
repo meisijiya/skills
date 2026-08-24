@@ -95,17 +95,6 @@ partitionToolCalls(calls) → segments
 
 > **验证**:并发执行后,文件系统 / 数据库状态应该等价于任意串行顺序的结果。如果不,说明 partition 错了——读操作没真 read-only,或写操作没真独立。
 
-### 2. Tool Registry / Dispatch
-
-**原则**:schema + handler + policy 三合一,单一真源。
-
-**关键约束**:
-- 未知工具 → 稳定 `ToolErrorCode`,不崩
-- 参数错误 → 运行时 schema 校验(不止靠模型)
-- 并发策略:任一工具 `executionMode: "sequential"` → 整批串行
-
-**反模式**:用 if-elif 分发工具调用 → 用 dispatch map。
-
 ### 3. Deferred Tool Loading
 
 **原则**:工具先列目录,schema 用到再展开。
@@ -268,6 +257,31 @@ partitionToolCalls(calls) → segments
 ```
 
 每步独立可验证,跑离线 mock 后跑真实 key。
+
+---
+
+## 14 机制 × L1/L2/L3 适用度
+
+不同 Harness 成熟度级别需要不同的机制组合。L1 项目不需要全套,L3 项目也不能跳过前面:
+
+| # | 机制 | L1 Individual | L2 Small team | L3 Organization |
+|---|---|---|---|---|
+| 1 | Agent Loop | **必选** | **必选** | **必选** |
+| 2 | Tool Registry / Dispatch | **必选** | **必选** | **必选** |
+| 3 | Deferred Tool Loading | 可选 | **必选** | **必选** |
+| 4 | Permission / Hooks | 可选 | **必选** | **必选** |
+| 5 | Context Compact | 可选 | **必选** | **必选** |
+| 6 | Memory System | 可选 | **必选** | **必选** |
+| 7 | SubAgent / Team | 跳过 | 可选 | **必选** |
+| 8 | Task System | 跳过 | 可选 | **必选** |
+| 9 | MCP Connectors | 跳过 | 可选 | **必选** |
+| 10 | Skills System | 可选 | 可选 | **必选** |
+| 11 | Audit & Hash Chain | 跳过 | 可选 | **必选** |
+| 12 | Session & Runtime | 跳过 | 可选 | **必选** |
+| 13 | Multi-Provider Adapter | 跳过 | 可选 | **必选** |
+| 14 | Event-Driven Bus | 跳过 | 跳过 | **必选** |
+
+> **判断**:L1 个人项目先把 1 + 2 跑通(Loop + Tool Dispatch),其他都可省。L2 团队项目加 3-6(context / permission / memory)。L3 组织级项目基本要全套,顺序仍是 Loop → Tools → Permission → Context → Memory → SubAgent → 其他。**跳级必败**——L1 直接上 SubAgent 是经典错例。
 
 ---
 

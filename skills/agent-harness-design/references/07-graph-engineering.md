@@ -95,3 +95,25 @@ Agent 系统从单进程升级到图,需要 4 层能力堆叠,缺哪一层就掉
 ## 引用与致谢
 
 本文件提炼自 `walkinglabs/learn-harness-engineering` L14 §Take the Graph Apart + §Three Structural Failures + §Anchors + §Orchestration Tax;`dg-ai-notes.pages.dev` 21-multi-agent.md SDK 视角的 5 个 multi-agent 模式(multi-session / runtime switch / subagent tool / handoff / fork)。所有内容均为重新表述,不复制上游逐字原文。
+
+## 附录 · 5 种 multi-agent 模式(SDK 视角)
+
+`dg-ai-notes.pages.dev` 21-multi-agent.md 把多 Agent 协作拆成 5 种实现模式,各种 Graph 设计都可以归到其中之一或多者组合:
+
+| # | 模式 | 描述 | 适用 |
+|---|---|---|---|
+| 1 | **multi-session** | 多个独立 session,各自有完整 messages[],通过外部 channel 通信 | 长期独立任务,需要各自 memory |
+| 2 | **runtime switch** | 同一个 session,根据当前任务切换到不同 runtime / 模型 | 模型路由策略化 |
+| 3 | **subagent tool** | 把 sub-agent 作为 tool,主 Agent 像调工具一样调 | 主从结构清晰的场景 |
+| 4 | **handoff** | 把控制权从一个 Agent 完全交给另一个,原 Agent 进入 sleep | 不同阶段任务由不同专长 Agent 处理 |
+| 5 | **fork** | 从某个节点复制状态,开新 branch 独立跑 | 需要并行探索多种方案 |
+
+> **选型**:5 种模式不互斥。一个复杂的 Graph 可能同时用 subagent tool + handoff(sub-agent 完成某段后 handoff 给下一个专家 Agent)。关键是:每种模式都有自己的失败模式,别混着用不熟悉的。
+
+## 附录 · 图的可调试性
+
+图比 Loop 难调试,因为状态分布在多个 node + 共享 state。3 个调试技巧:
+
+1. **强制落盘所有跨 node 消息**——Graph 的"看不见的传话"是 silent failure 的高发区
+2. **每节点独立 transcript**——子 Agent 的 messages[] 必须能独立查看,不要只在主 session 里看
+3. **Routing 决策可见**——节点分发到哪个 node 的逻辑必须可观测,否则失败时不知道消息去了哪

@@ -48,6 +48,10 @@
 | Provider 限流 | `after_provider_response` 看 HTTP 状态码(429 告警) |
 | 压缩触发 | `compaction_start/end` 事件 + reason 字段 |
 | 重试监控 | `auto_retry_start/end` 事件 |
+
+> **技巧**:每个事件落库时打上 `session_id` + `turn_id` 双标签,做 funnel 分析时不用回溯 transcript。**优先落盘事件而非 state**——状态是事件流的派生,直接落状态会导致后续难以回放。
+
+**告警分层**:429 / Provider 5xx 是 warning;连续 3 次 retry 失败转 critical;audit 哈希链断链 → page on-call。告警太多 = 没告警;分层后 on-call 才能在半夜醒来的第一秒分轻重。
 | 整轮结束 | **`agent_settled`(每 prompt 只发一次,可靠信号)** |
 | 落库技巧 | 首选 `subscribe`(不被 await);订阅不到的 5 个决策点走 `on` + fire-and-forget |
 
