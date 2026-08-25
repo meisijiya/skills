@@ -18,6 +18,22 @@ Order within the file follows upstream addition date (oldest first). When the li
 - **What it does**: Turns any codebase into a single-page interactive HTML course with scroll modules, animations, quizzes, and code↔plain-English side-by-side panels.
 - **Use when**: `"turn this into a course"`, `"explain this codebase interactively"`, `"teach me how this code works"`, `"interactive tutorial from this code"`.
 
+### wan-cc-harness-license-gate
+
+- **Upstream**: WanLanglin, https://github.com/WanLanglin/-awesome-cc-harness
+- **License**: `repository LICENSE is "All Rights Reserved / viewing only" — explicitly prohibits copy, modify, distribute, fork, clone, use as training data (verified 2026-08-25)`
+- **Why not installed**: `License is fundamentally incompatible with this repo's MIT and AGENTS.md §"License gate (2026-08-22)" forbids installing non-MIT-compatible skills under skills/. Furthermore, even re-derivation ("重新表述") is forbidden by the LICENSE's "create derivative works" prohibition, so downstream consumers cannot reuse WanLanglin content under any terms short of personal reading. This pointer is therefore not a federated install target either — it exists purely as a license-gate record so future contributors don't try to install or re-derive from this upstream.`
+- **What it does**: Reverse-engineering Claude Code's 512K LOC TypeScript source — 16 chapters covering ROI quantification (Terminal Bench 2.0 + LangChain case), 7 Continue Sites, tool partition algorithm, four-level context compression (Snip / Microcompact / Context-Collapse / Autocompact), 3-tier Harness maturity ladder, 12-dimension competitor comparison, plus ethics docs (grove-system.md / anti-distillation.md).
+- **Use when**: N/A — license forbids re-use; readers who want the content must visit https://github.com/WanLanglin/-awesome-cc-harness directly for personal reading only. `agent-harness-design` references WanLanglin only by chapter number and topic name as online observation notes; no verbatim copy or re-derivation.
+
+### dg-piagent
+
+- **Upstream**: buchidonggua (冬瓜), https://github.com/buchidonggua/dg-ai-notes/tree/main/skills/dg-piagent
+- **License**: `repo LICENSE is MIT (code) but README §License + CONTRIBUTING.md §License carve "文档" as CC-BY-SA-4.0; skills/dg-piagent/SKILL.md is "文档" by upstream's own definition; SKILL.md frontmatter has no `license:` field`
+- **Why not installed**: `This repo's contribution is a metadata pointer only — we ship zero verbatim prose and zero re-derivative content from upstream. Either form would touch the license gate: verbatim copy falls under upstream's CC-BY-SA-4.0 docs carve-out; re-derivation would still inherit the same source. Adopted federation pattern: agent-harness-design callouts route readers to install dg-piagent themselves for SDK-versioned work.`
+- **What it does**: SDK-development assistant for `@earendil-works/pi-coding-agent` v0.83.0 — given a pi-coding-agent task (build a DataAgent, scaffold a tool, wire extension hooks, evaluate an internal LLM endpoint, deploy as an SSE streaming service), dg-piagent returns executable code + API-precise configuration.
+- **Use when**: `"调用 pi-coding-agent SDK 直接干活"`, `"为 pi agent 加新的 tool"`, `"接 pi.on 或 session.subscribe 扩展点"`, `"评估自研 LLM 接入 pi-agent"`, `"把 pi agent 包成 SSE 流服务"`.
+
 ## How to add an entry
 
 - **Schema**: every block uses the same five fields in this order: Upstream, License, Why not installed, What it does, Use when. Don't add fields beyond the schema; the document stays scannable because every block carries the same shape. Stars, last-updated dates, installable alternatives, and local-copy placeholders are explicitly excluded; if any of them seem useful, the entry belongs in a different file.
