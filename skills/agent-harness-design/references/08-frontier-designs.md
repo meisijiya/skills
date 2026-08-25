@@ -1,6 +1,8 @@
 # 08 · Frontier Designs — 4 个主流 Agent 产品的横向对比
 
 > 本文件对比 Pi / Claude Code / Codex / DeepSeek 四个主流 Agent 产品的设计取舍,提炼每个产品"可以学什么"。
+>
+> ⚠️ **License 摘要**:本文件引用 `walkinglabs/learn-harness-engineering` 的 `docs/zh/harness-designs/` 目录(MIT,可 re-derivation)以及 `WanLanglin/-awesome-cc-harness` §16.1 12 维对比("All Rights Reserved / viewing only",**禁止复制**)。WanLanglin 部分只引用章节编号与表格维度名称(Claude Code / Cursor / GitHub Copilot × 12 维度框架),不复制表格内容;WanLanglin 的 12 维数据点**均为单一来源,未交叉复现**,引用前请回原文核对。
 
 ## 立场声明
 
@@ -95,24 +97,24 @@
 
 ## 12 维 Claude Code vs Cursor vs Copilot(WanLanglin §16.1)
 
-WanLanglin §16.1 把 Claude Code / Cursor / GitHub Copilot 三个主流编码助手做 12 维对比。下方数据直接引自 §16.1(数据来源:dev.to/raxxostudios, faros.ai, tech-insider.org),引用前请回原文核对最新版本:
+> ⚠️ **License 警告**:本节引用 `WanLanglin/-awesome-cc-harness` §16.1(许可证禁止 copy / modify / distribute / fork / clone)。本 skill **只引用章节编号 + 12 维度框架名称**,**不复制** §16.1 的具体对比单元格内容。读者需自行访问 https://github.com/WanLanglin/-awesome-cc-harness 在线查看 §16.1 全文。
 
-| 维度 | Claude Code | Cursor | GitHub Copilot |
-|---|---|---|---|
-| **运行环境** | 终端 CLI | VS Code fork | VS Code 扩展 |
-| **交互模式** | 自主 Agent | 协作编辑器 | 反应式自动补全 + Agent Mode |
-| **Agent Loop** | `while(true)` + 7 continue sites | 不公开 | 不公开 |
-| **工具系统** | 43+ 内置 + MCP 扩展 | 内置编辑 + 终端 | 内置编辑 + 终端 |
-| **权限模型** | 5 模式 + 7 级规则 + AI 分类器 | 编辑器级沙盒 | GitHub 权限 |
-| **Hook 系统** | 26 事件 × 4 类型 | 不公开 | 不公开 |
-| **上下文管理** | CLAUDE.md + 记忆 + 四级压缩 | .cursorrules + 代码库索引 | .github/copilot-instructions.md |
-| **多 Agent** | 5 种 Agent + Swarm 编排 | 8 并行 Agent(worktree) | 单 Agent |
-| **MCP 支持** | 6 种传输协议 | MCP 支持 | 有限 |
-| **开源可见度** | 源码可分析(512K LOC) | 闭源 | 闭源 |
-| **评估集成** | SWE-bench + Headless Profiler | 不公开 | 不公开 |
-| **市场份额(2026)** | 41% | ~15% | 38% |
+WanLanglin §16.1 把 Claude Code / Cursor / GitHub Copilot 三个主流编码助手做 12 维对比。该章节给出的 12 维度框架名称(WanLanglin 命名,**只引用维度名,不复制单元格内容**):
 
-> **12 维视角的价值**:这 12 项不是简单的"谁有谁无",而是工程权衡的具体维度——每个维度背后都有 OpenDev 论文 / 源码逆向的市场验证或可观察的设计取舍。**做自己的 Harness 时拿这张表对照**——你打算在哪几项上下注?哪几项可以外包?Claude Code 在 Hook 系统、上下文管理、评估集成上对外可分析(512K LOC 全公开),适合"先学后改";Cursor 的代码库索引 + 8 并行 Agent 在编辑器内体验上更强;Copilot 仍在反应式补全 + Agent Mode 之间切换,跟 GitHub 权限紧绑。
+1. 运行环境(Runtime Environment)
+2. 交互模式(Interaction Mode)
+3. Agent Loop
+4. 工具系统(Tool System)
+5. 权限模型(Permission Model)
+6. Hook 系统(Hook System)
+7. 上下文管理(Context Management)
+8. 多 Agent(Multi-Agent)
+9. MCP 支持(MCP Support)
+10. 开源可见度(Source Visibility)
+11. 评估集成(Evaluation Integration)
+12. 市场份额(Market Share)
+
+> **12 维视角的价值**:这 12 项不是简单的"谁有谁无",而是工程权衡的具体维度——每个维度背后都有 OpenDev 论文 / 源码逆向的市场验证或可观察的设计取舍。**做自己的 Harness 时拿这 12 个维度做自评**——你打算在哪几项上下注?哪几项可以外包?Claude Code 在 Hook 系统、上下文管理、评估集成上对外可分析(512K LOC 全公开),适合"先学后改";Cursor 的代码库索引 + 8 并行 Agent 在编辑器内体验上更强;Copilot 仍在反应式补全 + Agent Mode 之间切换,跟 GitHub 权限紧绑。具体单元格数据读者回原文 §16.1 核对。
 
 ## 5 子系统评分维度
 

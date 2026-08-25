@@ -18,6 +18,14 @@ Order within the file follows upstream addition date (oldest first). When the li
 - **What it does**: Turns any codebase into a single-page interactive HTML course with scroll modules, animations, quizzes, and code↔plain-English side-by-side panels.
 - **Use when**: `"turn this into a course"`, `"explain this codebase interactively"`, `"teach me how this code works"`, `"interactive tutorial from this code"`.
 
+### wan-cc-harness-license-gate
+
+- **Upstream**: WanLanglin, https://github.com/WanLanglin/-awesome-cc-harness
+- **License**: `repository LICENSE is "All Rights Reserved / viewing only" — explicitly prohibits copy, modify, distribute, fork, clone, use as training data (verified 2026-08-25)`
+- **Why not installed**: `License is fundamentally incompatible with this repo's MIT and AGENTS.md §"License gate (2026-08-22)" forbids installing non-MIT-compatible skills under skills/. Furthermore, even re-derivation ("重新表述") is forbidden by the LICENSE's "create derivative works" prohibition, so downstream consumers cannot reuse WanLanglin content under any terms short of personal reading. This pointer is therefore not a federated install target either — it exists purely as a license-gate record so future contributors don't try to install or re-derive from this upstream.`
+- **What it does**: Reverse-engineering Claude Code's 512K LOC TypeScript source — 16 chapters covering ROI quantification (Terminal Bench 2.0 + LangChain case), 7 Continue Sites, tool partition algorithm, four-level context compression (Snip / Microcompact / Context-Collapse / Autocompact), 3-tier Harness maturity ladder, 12-dimension competitor comparison, plus ethics docs (grove-system.md / anti-distillation.md).
+- **Use when**: N/A — license forbids re-use; readers who want the content must visit https://github.com/WanLanglin/-awesome-cc-harness directly for personal reading only. `agent-harness-design` references WanLanglin only by chapter number and topic name as online observation notes; no verbatim copy or re-derivation.
+
 ### dg-piagent
 
 - **Upstream**: buchidonggua (冬瓜), https://github.com/buchidonggua/dg-ai-notes/tree/main/skills/dg-piagent

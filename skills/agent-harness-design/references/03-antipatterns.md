@@ -207,11 +207,11 @@ install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.
 
 1. 读完整张表,标红任何你用了的 ❌ 项
 2. 对每个标红项,要么改成 ✅,要么在 commit message 里解释为什么这里特殊
-3. 重跑 `scripts/verify.py`(如 learn-workbuddy 范式)+ 离线 mock 套件
+3. 重跑本仓库 `scripts/verify.py`(自带最小自检,见 04-production.md §上线前两道门)+ 离线 mock 套件
 4. 让另一只 agent 独立评审——它没参与设计,更容易发现反模式
 
 ---
 
 ## 引用与致谢
 
-本反模式清单综合 `shareAI-lab/learn-claude-code` 的 anti-patterns 表、`meisijiya/learn-workbuddy` docs/security-boundaries.md 与 24 章误区、`dg-ai-notes.pages.dev` M05-M07 + P05-P07 中的工程陷阱;`walkinglabs/learn-harness-engineering` L04 §Context Engineering、L13 §The Six Primitives + §Four Silent Costs、L14 §Three Structural Failures + §Orchestration Tax。
+本反模式清单综合 `shareAI-lab/learn-claude-code` 的 anti-patterns 表、`meisijiya/learn-workbuddy` docs/security-boundaries.md 与 24 章误区、`dg-ai-notes.pages.dev` M05-M07 + P05-P07 中的工程陷阱;`walkinglabs/learn-harness-engineering` `lecture-04-...` §Context Engineering、`lecture-13-loop-engineering` §The Six Primitives + §Four Silent Costs、`lecture-14-graph-engineering` §Three Structural Failures + §Orchestration Tax。

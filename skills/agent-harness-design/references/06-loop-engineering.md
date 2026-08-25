@@ -47,7 +47,7 @@ Loop 工程跑久了会**悄悄欠下 4 种债**,不像 bug 那么明显,但累�
 | **Cognitive Surrender** | 团队放弃 review,所有事情都甩给 Loop 跑 | Loop 产出的 PR review 率 < 30% | 强制 human-in-the-loop,高风险操作必须 ASK |
 | **Token Blowout** | 单次 Loop 烧光 token budget | 单次 Loop avg cost 异常 | 硬上限 + 每 1000 步检查 + 自动 abort |
 
-> **治疗**:4 种债都不会自己消失,都需要 Harness 层主动治理。`scripts/verify.py` 这类"周期性重置 + 审计"的工具不是 nice-to-have,是 Loop 工程的免疫系统。
+> **治疗**:4 种债都不会自己消失,都需要 Harness 层主动治理。本仓库自带的 `scripts/verify.py` 这类"周期性重置 + 审计"工具(覆盖 frontmatter / 14 机制 / 30 反模式 / license banner 等最小自检)不是 nice-to-have,是 Loop 工程的免疫系统。
 
 ## Generator / Evaluator Separation
 

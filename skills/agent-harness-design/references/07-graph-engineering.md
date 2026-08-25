@@ -1,6 +1,8 @@
 # 07 · Graph Engineering — 多 Agent 图的设计与失败
 
 > 本文件讲"如何把单 Loop 升级为多 Agent 协作图"。读完 5 分钟,理解 Graph 的 4 部件、3 结构性失败、orchestration tax。
+>
+> ⚠️ **License 摘要**:本文件引用 `walkinglabs/learn-harness-engineering` `lecture-14-graph-engineering`(MIT,可 re-derivation)以及 `dg-ai-notes.pages.dev` 的 21-multi-agent.md(CC-BY-SA-4.0 for docs,只引用章节名称)。
 
 ## 一句话 / 核心概念
 

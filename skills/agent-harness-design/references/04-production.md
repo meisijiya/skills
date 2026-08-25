@@ -48,11 +48,12 @@
 | Provider 限流 | `after_provider_response` 看 HTTP 状态码(429 告警) |
 | 压缩触发 | `compaction_start/end` 事件 + reason 字段 |
 | 重试监控 | `auto_retry_start/end` 事件 |
+| 整轮结束 | **`agent_settled`(每 prompt 只发一次,可靠信号)** |
+| 落库技巧 | 首选 `subscribe`(不被 await);订阅不到的 5 个决策点走 `on` + fire-and-forget |
 
 > **技巧**:每个事件落库时打上 `session_id` + `turn_id` 双标签,做 funnel 分析时不用回溯 transcript。**优先落盘事件而非 state**——状态是事件流的派生,直接落状态会导致后续难以回放。
 
 **告警分层**:429 / Provider 5xx 是 warning;连续 3 次 retry 失败转 critical;audit 哈希链断链 → page on-call。告警太多 = 没告警;分层后 on-call 才能在半夜醒来的第一秒分轻重。
-| 整轮结束 | **`agent_settled`(每 prompt 只发一次,可靠信号)** |
 | 落库技巧 | 首选 `subscribe`(不被 await);订阅不到的 5 个决策点走 `on` + fire-and-forget |
 
 **验收**:
@@ -61,6 +62,8 @@
 - Provider 429 时告警能触发
 
 ### 上下文四级压缩管道(WanLanglin §8 / §3.3)
+
+> ⚠️ **License 警告**:本节引用 `WanLanglin/-awesome-cc-harness` 的 §8 §3.3 章节编号与 Snip / Microcompact / Context-Collapse / Autocompact 四个层级名称。**该仓库许可证为 "All Rights Reserved / viewing only",禁止 copy / modify / distribute / fork / clone**。本 skill 不复制该仓库任何原文,读者需自行访问 https://github.com/WanLanglin/-awesome-cc-harness 在线查看。
 
 Agent 产品跑起来后,token 增长是最常见的真实瓶颈——即使 1M context window 在长对话里也会被填满。WanLanglin §8 §3.3 给出**四级压缩管道**,从轻到重逐级触发,Claude Code 的实现就是这四级:
 
@@ -122,19 +125,17 @@ Agent 产品跑起来后,token 增长是最常见的真实瓶颈——即使 1M 
 ```bash
 # 1. 单元 / 集成测试
 python3 -m pytest -q   # 或 npm test / go test,看项目
-# 2. 离线 demo + 资产完整性
+# 2. 本 skill 自带的最小自检(本仓库真实脚本,见 scripts/verify.py)
 python3 scripts/verify.py
 ```
 
-`scripts/verify.py`(以 learn-workbuddy 为例)覆盖:
-- Python 语法 + pytest(mini harness / REST/ACP / smoke / 资产)
-- 24 章 `--demo` 离线入口
-- 关键章节 `--interactive` 进退
-- mini HTTP server smoke
-- README 架构图 + SVG 引用 + clean-room 扫描
+`scripts/verify.py`(本 skill 自带的最小自检,**非上游 learn-workbuddy 的同名脚本**)覆盖:
+- 本 skill 结构 + frontmatter 校验(name / description ≤200 字节 / license / 无 `metadata.internal`)
+- 14 机制清单(02-checklist.md)与 30 反模式清单(03-antipatterns.md)计数对齐
+- 8 个 references 文件存在性 + license banner 出现次数(WanLanglin 警告至少 1 处)
 
 ---
 
 ## 引用与致谢
 
-本检查清单综合 `dg-ai-notes.pages.dev` P07 准备上线、`shareAI-lab/learn-claude-code` s15 集成 harness、`meisijiya/learn-workbuddy` docs/security-boundaries.md;`WanLanglin/-awesome-cc-harness` §8 §3.3 四级压缩管道(Snip / Microcompact / Context-Collapse / Autocompact)。
+本检查清单综合 `dg-ai-notes.pages.dev` P07 准备上线、`shareAI-lab/learn-claude-code` s01-s12 集成 harness、`meisijiya/learn-workbuddy` docs/security-boundaries.md;`WanLanglin/-awesome-cc-harness` §8 §3.3 四级压缩管道(Snip / Microcompact / Context-Collapse / Autocompact)——**仅引用章节编号与名称,该仓库许可证禁止复制,详见文件内 license 警告 banner**。

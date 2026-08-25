@@ -1,6 +1,8 @@
 # 01 · Mindset — Model + Harness 范式
 
 > 本文件讲"为什么这么设计"而不是"怎么写代码"。读完 5 分钟,理解 Agent 工程的根本立场。
+>
+> ⚠️ **License 摘要**(贯穿全 skill):本文件引用 `WanLanglin/-awesome-cc-harness`(许可证为 "All Rights Reserved / viewing only",禁止 copy / modify / distribute / fork / clone)以及 `dg-ai-notes.pages.dev`(docs 子部分为 CC-BY-SA-4.0)时,**只引用章节编号与论点名称,不复制任何原文段落**。读者需自行访问原仓库在线查看。详见 `references/05-source-synthesis.md` §"License 摘要"。
 
 ## 视角选型
 
