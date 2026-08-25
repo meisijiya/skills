@@ -1,5 +1,7 @@
 # 06 · Loop Engineering — 让 Agent 自己跑起来
 
+> ⚠️ **License 摘要**:本文件综合 `walkinglabs/learn-harness-engineering` L13 §The Six Primitives of a Loop + §Four Silent Costs + §Generator/Evaluator Separation(MIT,可 re-derivation)以及 `WanLanglin/-awesome-cc-harness` §3.2 The Seven Continue Sites("All Rights Reserved / viewing only",**禁止复制**)。本文件 §Continue Sites 段仅引用章节编号与论点名称,不复制 WanLanglin 任何原文段落;详见 `references/05-source-synthesis.md` §"License 摘要"。
+
 > 本文件讲"如何把单次对话升级为持续运行的 Agent"。读完 5 分钟,理解 Loop 工程的 4 种循环形态、6 个原语、4 silent costs。
 
 ## 一句话 / 核心概念

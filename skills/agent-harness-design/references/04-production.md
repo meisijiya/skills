@@ -76,7 +76,7 @@ Agent 产品跑起来后,token 增长是最常见的真实瓶颈——即使 1M 
 
 **执行顺序**:`snip → micro → context-collapse → auto`。各级互不排斥,可组合运行。**Autocompact 是最后一道**,只在仍然超阈值时才触发——前三道全跑完都不够才动用。
 
-> **为什么不一次到位**:每一级都付出成本(延迟 / LLM 调用 / 信息损失),按"信息损失和成本"从低到高排序,先尝试最轻的层级,只到必要时才动用全对话摘要。**约束执行顺序**:源码注释道 Snip 必须先于 Microcompact 跑(`Apply snip before microcompact`),Snip 释放的 token 数必须传给 Autocompact 的阈值检查。
+> **为什么不一次到位**:每一级都付出成本(延迟 / LLM 调用 / 信息损失),按"信息损失和成本"从低到高排序,先尝试最轻的层级,只到必要时才动用全对话摘要。**约束执行顺序**:四级必须按 `Snip → Microcompact → Context-Collapse → Autocompact` 顺序执行;前一级释放的 token 数必须传给下一级的阈值检查,Autocompact 仅在前面三级仍超出阈值时才触发。
 
 ## 轴 4 · 性能与成本
 
@@ -110,6 +110,20 @@ Agent 产品跑起来后,token 增长是最常见的真实瓶颈——即使 1M 
 | Fail-closed | `emitToolCall()` 无 try-catch,扩展崩了 block 工具 |
 | Key 管理 | Key 不落盘;4 种方式有明确优先级 |
 | OS 级隔离 | 字符串 deny-list 只是安全带,生产必须 OS 沙盒(macOS App Sandbox / seccomp / 命名空间) |
+
+### 5.x Sandbox 三维隔离(产品化前必读)
+
+代码级安全(bash command deny-list、参数 schema 校验)只是安全带;生产环境必须三维独立隔离——任一维度失守另两个仍能兜底:
+
+| 维度 | 隔离什么 | 单点失守后果 | 兜底 |
+|---|---|---|---|
+| **文件系统** | workspace 边界、`..` / 绝对路径 / symlink 黑名单 | 文件越权访问 / 路径逃逸 | 网络 + 进程层仍能限制外泄 |
+| **网络** | 出站白名单、DNS 拦截、禁用 raw socket | 数据外泄 / 跨域调用未授权服务 | 进程层仍能限制子进程行为 |
+| **进程** | 子进程权限、CPU/内存配额、禁止 fork 炸弹 | 资源耗尽 / 提权 | 文件系统层仍能限制持久化 |
+
+**判定标准**:三个维度必须**独立实现**,不能一个沙盒同时覆盖三个(那是单层沙盒,失守即全失)。代码级 deny-list 不计入"三维"——它属于工具白名单层(见 [`02-checklist.md` §4 Permission](02-checklist.md) 的 L1-L3),与 OS 级沙盒不在同一维度。
+
+> **这是本 skill 的原创提炼**(基于公开的深度防御方法论,NIST / SANS 标准),**不是 WanLanglin §7 的具体沙盒实现**。WanLanglin §7 给的是 Claude Code 内部架构(Bun runtime + macOS Seatbelt profile + 容器化),那是 Anthropic 私有实现,本 skill 不引用。
 
 📦 **Federation**: For `pi-coding-agent` v0.83.0 API specifics (createAgentSession / defineTool / pi.on / session.subscribe / SSE streaming), install the upstream `dg-piagent` skill — see pointer in `docs/awesome-skills.md`. Our skill stays vendor-neutral; `dg-piagent` stays SDK-versioned.
 

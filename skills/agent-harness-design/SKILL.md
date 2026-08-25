@@ -10,15 +10,15 @@ license: MIT
 
 ## 高层视角选型表
 
-先把 Agent 系统拆成 5 个相互正交的子系统(walkinglabs L02 §"What a Harness Actually Is"),工程上的判断都从这张表开始。
+先把 Agent 系统拆成 5 个**主分类**(walkinglabs L02 §"What a Harness Actually Is")。**正交性声明**:5 个主分类大致正交,但单个机制可同时跨多视角——做选型时先选主分类,再考虑跨轴副作用。工程上的判断都从这张表开始。
 
-| 视角 | 看什么 | 用哪个 reference |
-|---|---|---|
-| **Instructions / 指令体系** | `AGENTS.md` / `CLAUDE.md` / `.cursorrules` 等仓库即规范文件;规则优先级与可变层数 | [`02-checklist.md` §10 Skills System](references/02-checklist.md) + [`02-checklist.md` §1 Agent Loop](references/02-checklist.md) |
-| **Tools / 工具表面** | schema/handler/policy 三合一、并发调度、错误反传、MCP 接入 | [`02-checklist.md` §2 §3](references/02-checklist.md) + [`03-antipatterns.md` L4 L5](references/03-antipatterns.md) |
-| **Environment / 环境** | 运行时(本地 / 容器 / Worktree)、依赖锁(pyproject.toml / package.json)、版本固定(.nvmrc / .python-version)、可复现性 | [`02-checklist.md` §1](references/02-checklist.md) + [`04-production.md` §轴5 安全与权限](references/04-production.md) |
-| **State / 状态** | 会话 transcript、跨重启的事实、进度文件、append-only 持久化与 head anchor | [`02-checklist.md` §6 Memory System](references/02-checklist.md) + [`03-antipatterns.md`](references/03-antipatterns.md) |
-| **Feedback / 反馈** | 验证命令(test / lint / type-check)、Goal/Evaluator 分离、独立评估器 | [`02-checklist.md` §5](references/02-checklist.md) + [`06-loop-engineering.md` §Generator/Evaluator](references/06-loop-engineering.md) |
+| 视角 | 看什么 | 用哪个 reference | 跨轴副作用(常见越界) |
+|---|---|---|---|
+| **Instructions / 指令体系** | `AGENTS.md` / `CLAUDE.md` / `.cursorrules` 等仓库即规范文件;规则优先级与可变层数 | [`02-checklist.md` §10 Skills System](references/02-checklist.md) + [`02-checklist.md` §1 Agent Loop](references/02-checklist.md) | **Skills System 同时是 Tools 加载路径**(`load_skill` 是工具调用);**Agent Loop 同时涉及 Instructions 注入**(system prompt 组装) |
+| **Tools / 工具表面** | schema/handler/policy 三合一、并发调度、错误反传、MCP 接入 | [`02-checklist.md` §2 §3](references/02-checklist.md) + [`03-antipatterns.md` L4 L5](references/03-antipatterns.md) | **Hooks 同时是 Feedback**(权限审批反馈);**MCP Connectors 同时是 Environment**(网络依赖管理) |
+| **Environment / 环境** | 运行时(本地 / 容器 / Worktree)、依赖锁(pyproject.toml / package.json)、版本固定(.nvmrc / .python-version)、可复现性 | [`02-checklist.md` §1](references/02-checklist.md) + [`04-production.md` §轴5 安全与权限](references/04-production.md) | 与 Tools 的边界:MCP 既是 Tools 接入也是 Environment 依赖 |
+| **State / 状态** | 会话 transcript、跨重启的事实、进度文件、append-only 持久化与 head anchor | [`02-checklist.md` §6 Memory System](references/02-checklist.md) + [`03-antipatterns.md`](references/03-antipatterns.md) | **Audit & Hash Chain 同时是 Feedback**(告警);**Memory 召回是 Feedback 循环**(query → 召回 → 注入,非纯 State 读取);**Context Compact 严格说同时跨 State + Tools**(四步管道是 messages[] 状态管理,本身也是 4 个操作) |
+| **Feedback / 反馈** | 验证命令(test / lint / type-check)、Goal/Evaluator 分离、独立评估器 | [`02-checklist.md` §5](references/02-checklist.md) + [`06-loop-engineering.md` §Generator/Evaluator](references/06-loop-engineering.md) | **Context Compact 不在本视角**(本质是 State+Tools);**Memory 召回部分在本视角** |
 
 > **框架中立**:两个上游(walkinglabs L02 五子系统 / WanLanglin §1.2 三大支柱)对视角的划分不同——walkinglabs 强调"哪些设施决定了 Agent 的能力实现率",WanLanglin 强调"该把工程时间投到哪几块";本表用 walkinglabs 的五子系统组织路由,引用源在 [`05-source-synthesis.md`](references/05-source-synthesis.md)。
 
@@ -70,7 +70,9 @@ license: MIT
 
 1. **明确目标域与边界**——这个 Agent 解决什么?不解决什么?(单域 vs 通用)
 
-   **会话生命周期 16 步**(参考 walkinglabs L02 README §Agent Session Lifecycle):每个 Agent 会话从启动到结束都走这条流水线;工程上各步分别对应 02-checklist 的不同机制。
+   **会话生命周期 16 步**(参考 walkinglabs root README §"The Agent Session Lifecycle",不在 L02):每个 Agent 会话从启动到结束都走这条流水线;工程上各步分别对应 02-checklist 的不同机制。
+
+   > **步骤名为本 skill 概念化标注**:walkinglabs 原始描述是动作式(Agent reads X / Agent runs Y),**结构**(4 阶段 × N 步)与上游一致,但**具体步骤名**(Bootstrap / Verify / Model turn 等)为本 skill 对原 16 步的概念抽象,非 walkinglabs 原话。引用时按本表读,做实操再回原 README。
 
    ```text
    START (1-5):
@@ -112,7 +114,7 @@ license: MIT
 
 ### 场景 B:评审/诊断已有 Agent 设计
 
-1. **跑一遍反模式清单** [`references/03-antipatterns.md`](references/03-antipatterns.md)——**20 项过完**,标红项就是问题
+1. **跑一遍反模式清单** [`references/03-antipatterns.md`](references/03-antipatterns.md)——**30 项过完**(实际为 30 个:范式层 6 + Loop 层 8 + 上下文层 5 + 多 Agent 层 4 + 运营层 5 + Graph 层 2),标红项就是问题
 2. **检查 Loop 是否恒定**——`while True` 是否被改写过?有没有 if-else 分支插在循环体?
 3. **检查 Tool Registry 是否单一真源**——schema/handler/policy 是否分开?有没有三处定义?
 4. **检查权限是否三段式**——decide / resolve / run 是否分开?是否有 DENY 被覆盖的可能?
@@ -130,6 +132,24 @@ license: MIT
 4. **每加一个机制就跑回归**——离线 mock + 真实 key 两套都跑,确保旧路径不退化
 5. **加完后用 [`references/05-source-synthesis.md`](references/05-source-synthesis.md) 校准**——三个上游资源各自覆盖了什么,避免重复造轮子
 
+### 场景 D:自动化 / 升级到 Loop / 多 Agent 图
+
+1. **判定是否真要自动化**——参照 [`references/06-loop-engineering.md` §何时用 / 何时不用](references/06-loop-engineering.md),满足 ≥ 1 条"何时用"且不命中"何时不用"才走 Loop 工程路径
+2. **选 Loop 形态**——读 [`06-loop-engineering.md` §4 种循环](references/06-loop-engineering.md)(Goal-driven / Timer-driven / Maker-Checker / Event-driven),匹配你的触发源
+3. **确认是否需要 Graph**——读 [`references/07-graph-engineering.md` §5 评估标准](references/07-graph-engineering.md)(任务复杂度 / 并行收益 / 责任可分 / 评审带宽 / 失败兜底),**满足 ≥ 3 条才上 Graph**
+4. **落实 6 原语**——`Automations` / `Worktrees` / `Skills` / `Connectors` / `Sub-agents` / `External State`([`06-loop-engineering.md` §6 原语](references/06-loop-engineering.md))缺一不可
+5. **自检 4 Silent Costs**——Verification Debt / Comprehension Rot / Cognitive Surrender / Token Blowout([`06-loop-engineering.md` §4 Silent Costs](references/06-loop-engineering.md))各自准备治理动作
+6. **横向对比 Frontier**——如要做选型 / 借鉴,读 [`08-frontier-designs.md`](references/08-frontier-designs.md) Pi / Claude Code / Codex / DeepSeek 4 种设计哲学与 12 维评估框架(只用框架名,具体单元格数据见原仓库)
+7. **Generator / Evaluator 分离**——Loop 内核必须有独立评估器,见 [`06-loop-engineering.md` §Generator/Evaluator Separation](references/06-loop-engineering.md)
+
+**为何本场景单独成段**:`06 / 07` 引用文件本身已自洽,但 `SKILL.md` 之前未给场景 D 提供 step-by-step 入口。本段修复 SKILL.md 的 4 类场景承诺闭环。
+
+**与场景 C 的区别**:场景 C 加单机制(短时);场景 D 升级架构(天 / 周级,涉及 Loop 持久化、Worktree、多 Agent 通信、External State)。
+
+## Federation(可选集成)
+
+📦 **生产落地**:要把本 skill 的设计哲学落到真实生产环境的 Pi Coding Agent 时,`pi-coding-agent` v0.83.0+ 的具体 API(`createAgentSession` / `defineTool` / `pi.on` / `session.subscribe` / SSE streaming)详见上游 **`dg-piagent`** skill(从仓库根 `docs/awesome-skills.md` 入口)。**本 skill 保持 vendor-neutral**——只讲 harness 设计哲学,不绑定 SDK 版本;`dg-piagent` 维护 SDK 版本化的具体实现。选型时先读本 skill 决定走哪几条主路径,再装 `dg-piagent` 落地到 Pi 运行时。
+
 ## References
 
 按使用阶段递进,按需加载。
@@ -141,7 +161,7 @@ license: MIT
 ### 按需
 
 - [`references/02-checklist.md`](references/02-checklist.md) — 14 个机制清单(机制 / 为什么 / 在哪章 / 如何验证),从 0 设计与评审都查这张表
-- [`references/03-antipatterns.md`](references/03-antipatterns.md) — **20 个反模式**(错 / 对 / 为什么错),设计完成与加新机制后必跑自检
+- [`references/03-antipatterns.md`](references/03-antipatterns.md) — **30 个反模式**(范式层 6 + Loop 层 8 + 上下文层 5 + 多 Agent 层 4 + 运营层 5 + Graph 层 2;每条 错 / 对 / 为什么错),设计完成与加新机制后必跑自检
 - [`references/04-production.md`](references/04-production.md) — 产品化落地 5 轴(API 化 / 错误处理 / 可观测性 / 性能 / 安全),上线前必跑
 - [`references/06-loop-engineering.md`](references/06-loop-engineering.md) — 自动化 Loop:6 原语、4 silent costs、generator/evaluator 分离
 - [`references/07-graph-engineering.md`](references/07-graph-engineering.md) — 多 Agent 图:4 部件、3 结构性失败、orchestration tax

@@ -1,6 +1,8 @@
 # 02 · Checklist — 14 个 Harness 机制清单
 
 > 设计 / 评审 / 加新机制时,查这张表。每行:机制 / 为什么 / 在哪 / 如何验证。
+>
+> ⚠️ **License 摘要**:本文件引用的 5 个上游资源许可证分别为:`shareAI-lab/learn-claude-code` / `meisijiya/learn-workbuddy` / `walkinglabs/learn-harness-engineering` = **MIT**(可 re-derivation);`dg-ai-notes.pages.dev` 的 docs 子部分(含 dg-piagent/SKILL.md) = **CC-BY-SA-4.0**(只引用章节名称,本仓库不复制);`WanLanglin/-awesome-cc-harness` = **"All Rights Reserved / viewing only"**(禁止 copy / modify / distribute)。本文件 §1 7 Continue Sites 与 §2 工具分区算法 在自身框架内做了**重新表述**,**不复制** WanLanglin §3.2 / §3.4 原文段落、代码片段、量化数字、图表结构——读者需自行访问 https://github.com/WanLanglin/-awesome-cc-harness 在线查看。详见 `references/05-source-synthesis.md` §"License 摘要"。
 
 ## 总表
 
@@ -229,6 +231,24 @@ partitionToolCalls(calls) → segments
 - fail-closed:`emitToolCall()` 无 try-catch,扩展崩了 block 工具
 
 **反模式**:subscribe 里写 `tool_call` 处理 → 静默命中不了。
+
+#### Hooks 决策点矩阵(按 Loop 生命周期)
+
+> 这是本 skill 的**原创提炼**——按 Loop 生命周期切出 5 个决策点,不照搬任何具体产品的事件命名(Claude Code 有 26 个 hook 事件、Cursor / Copilot 各有命名体系,各家互不通用)。本表是通用框架,可映射到任意 Agent 系统。
+
+| 决策点 | 类别 | 是否可动手 | 典型用途 | 失败模式 |
+|---|---|---|---|---|
+| `before_agent_start` | 配置 | ✅ 可改 system prompt | 注入 context / 改 system prompt | 改坏 prompt → 后续轮次降级 |
+| `input` (UserPromptSubmit) | 验证 | ✅ 可 block | 参数校验 / 输入过滤 | 漏 block → 危险命令进入 Loop |
+| `tool_call` | 拦截 | ✅ 可 block + 改 input | 权限拦截 / 参数改写 | await 慢接口 → 主流程拖慢 |
+| `tool_result` | 审计 | ✅ 可改 result | 审计 / 脱敏 / 注入错误事件 | 改坏 result → 模型决策错误 |
+| `agent_settled` | 通知 | ❌ 只读 | 整轮收尾 / 落库 / 指标上报 | 用 `message_end` 替代 → 多轮重复落库 |
+
+**关键约束补充**:
+- 决策型 emit 无 try-catch(fail-closed)——扩展崩了 block 工具,不静默吞错
+- on handler 不 await 慢接口——把检查结果缓存到内存,handler 直接读,或挪到 `before_agent_start` 阶段批处理
+- 落库首选 `subscribe`(不被 await + fire-and-forget);订阅不到的 5 个决策点用 `on` + fire-and-forget
+- **不要在 `tool_call` handler 里 await DB 查询**——会让 Loop 主流程被拖慢;参考 [`03-antipatterns.md` P3 P4](03-antipatterns.md)
 
 ---
 

@@ -11,11 +11,13 @@
 
 | 资源 | 视角 | 章节数 | 形态 | 独有贡献 |
 |---|---|---|---|---|
-| `shareAI-lab/learn-claude-code` | **CLI Agent 教学** | 12 × 3(中/英/日) | 教程 + 教学代码 | 范式定义("Agency 来自模型")、12 章机制教学化、单进程 Loop 演进路径。`docs/{en,ja,zh}/s01-s12*.md` 共 36 文件,无 s13-s17 |
+| `shareAI-lab/learn-claude-code` | **CLI Agent 教学** | **12 章 legacy + 17 章 current 两套并存** | 教程 + 教学代码 | 范式定义("Agency 来自模型")、**legacy `docs/{en,ja,zh}/s01-s12*.md` 12 章教学化**(共 36 文件)、**current 根目录 s01-s17 17 章工程化**(本表 14 机制映射的章节号取自这套)、单进程 Loop 演进路径 |
+
+> **shareAI-lab 两套章节体系说明**:`docs/{en,ja,zh}/` 是 12 章 legacy 教学化(共 36 文件),根目录 `s01_agent_loop` ~ `s17_goal_loop` 是 17 章 current 工程化(README 显式声明两套编号 "do not always match")。本 skill 的 "**14 机制 × 来源映射**" 表(下表)中的章节号 **s01-s14 一律指 current 17 章体系**,对应真实根目录文件;legacy 12 章则用于"教学化呈现",不做机制映射。引用时如不确定,优先看根目录文件存在性,不要混用两套编号。
 | `meisijiya/learn-workbuddy` | **桌面 Agent 工程** | 24 + docs | 教学代码 + 架构图 + 多 Provider | 六层架构、三大根本矛盾、Agent 角色分工、Sidecar 进程模型、多 Provider 适配、Hash Chain 审计 |
 | `dg-ai-notes.pages.dev` | **生产 SDK 源码学习** | 10(源码)+ 7(实战) | 文档 + 代码片段 | 三层架构(`pi-ai` / `pi-agent-core` / `pi-coding-agent`)、内核+叠加 Loop、两条事件管道、SDK 视角 21-multi-agent 模式(独立于 M07)、二开起步检查清单(SKILL.md) |
-| `walkinglabs/learn-harness-engineering` | **产品视角 Loop / Graph** | 14 节课 + 8 项目 + 14 种语言 | 教程 + 跨语言实现 | 5 子系统框架(Prompt / Context / Loop / Tools / Orchestration)、**会话生命周期 16 步**、`lecture-13-loop-engineering` 章节、`lecture-14-graph-engineering` 章节、`docs/zh/harness-designs/`(Pi / Claude Code / Codex / DeepSeek) |
-| `WanLanglin/-awesome-cc-harness` | **逆向 Claude Code 512K LOC** | 16 章 | 源码逆向 + 工程化总结 | **3 大支柱**(Context / Tools / Loop)、**ROI 量化证据**(+14% harness vs +3-5% model)、**3 级 Harness 成熟度**(L1/L2/L3)、**7 Continue Sites**、**工具分区算法**、**12 维竞品对比**、Grove + Anti-Distillation 伦理视角(本 skill 只引用章节编号与论点名称,不复制原文) |
+| `walkinglabs/learn-harness-engineering` | **产品视角 Loop / Graph** | 14 节课 + 8 项目 + 14 种语言 | 教程 + 跨语言实现 | 5 子系统框架(Instructions / Tools / Environment / State / Feedback)、**会话生命周期 16 步**、`lecture-13-loop-engineering` 章节、`lecture-14-graph-engineering` 章节、`docs/zh/harness-designs/`(Pi / Claude Code / Codex / DeepSeek) |
+| `WanLanglin/-awesome-cc-harness` | **逆向 Claude Code 512K LOC** | 16 章 | 源码逆向 + 工程化总结 | **3 大支柱**(Context / Tools / Loop)、**ROI 量化证据**(WanLanglin §1.5 给出 +14% harness vs +3-5% model 的对比图;**具体百分比未独立验证,以原仓库为准**)、**3 级 Harness 成熟度**(L1/L2/L3,§13.1-13.3)、**7 Continue Sites**(§3.2)、**工具执行编排**(§3.4,内含工具分区子段)、**12 维竞品对比**(§16.1)、Grove + Anti-Distillation 伦理视角(本 skill 只引用章节编号与论点名称,不复制原文) |
 
 ## 机制 × 来源映射(本 skill 的 14 个机制从哪来)
 
