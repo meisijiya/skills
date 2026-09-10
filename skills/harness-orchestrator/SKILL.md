@@ -43,8 +43,6 @@ license: MIT
 **步骤**(按顺序,缺一步则视为未完成):
 
 1. 调用 `setup-matt-pocock-skills`,配置 issue tracker / triage 标签 / domain doc 布局。**必须最先跑**——后续 to-spec、to-tickets 都依赖它产出的 `docs/agents/issue-tracker.md`。
-   - **若缺失**:按下方「上游 skill 缺失 / 调用失败的 fallback」表处理;不要用通用 setup 流程替代 `setup-matt-pocock-skills` 的 issue-tracker 配置。
-
 2. 调用 `interview-me` 对齐用户的项目级意图(谁用、解决什么、成功的标准、约束)。**仅当用户给的项目描述不充分时跑**;若用户已给出明确一句话目标,可跳过。
 3. 调用 `harness-creator` 创建 harness 状态文件:`AGENTS.md` / `feature_list.json` / `progress.md` / `init.sh`,按其"minimal harness first"原则,不擅自加 memory / 多 agent / 工具权限。
 4. 调用 `domain-modeling` 沉淀首批领域词到 `CONTEXT.md`,**仅在领域词尚未存在时**;术语随设计立即写入,不要批量。
@@ -139,29 +137,6 @@ license: MIT
 | issue tracker 未配置 | `setup-matt-pocock-skills` |
 | 收尾时发现状态文件携带过期内容 | `context-engineering` 剪枝 |
 | 一个会话想跨多个 feature | 跑阶段二循环,不要合并多个 feature 进同一个会话 |
-
-## 上游 skill 缺失 / 调用失败的 fallback(任一阶段通用)
-
-任一上游 skill 缺失或调用失败时,**不要静默跳过、不要调用不存在的 skill**。按三段式处理:
-
-| 触发条件 | 一线修复 | 仍失败兜底 |
-|---|---|---|
-| 单个上游 skill 报 `not found` / 未安装 | 在该阶段直接报错,列出缺失清单,提示用户 `npx skills add` 安装 | 该阶段标 `blocked`,后续阶段不前进,等用户装完再恢复 |
-| 上游 skill 调用成功但**返回值不达停止条件**(例如 `interview-me` 未拿到 95% 确认) | 回到该 skill 重跑一次,把未达条件项作为输入 | 若连续 3 次仍不达标,停止该阶段并请用户决定是放宽验收还是人工对齐 |
-| 上游 skill 调用过程中**静默失败**(无错误但产出空) | 立即停止流水线,把空产物与上游 skill 名一起写入 `progress.md` 的「阻塞」段 | 改用 `harness-creator` 的 audit 动作复核,若 audit 通过则跳过该空产物的阶段 |
-
-**反例**:看到 `interview-me` 不可用就跳过意图对齐直接写 spec——这违反「意图未对齐时不允许写 spec」(跨阶段不变量),导致后续 spec 与用户实际意图脱钩。
-
-## 中途 scope 漂移的反例(看到任一项立刻停下)
-
-任一阶段开始后,如果出现以下信号,**停止当前阶段、回到 `interview-me` 重对齐**,而不是合并进当前会话:
-
-- 用户在本阶段中途追加**新 feature 或新模块**(即使只有一句话)
-- 用户在「下一步」前先要求**改当前 feature 的验收标准**
-- 用户突然要求**切换技术栈 / 语言 / 框架**
-- 用户要求**同时推进两个 feature**(「顺便把这个也做了」)
-
-**反例**:在阶段二的 spec 撰写中途,用户说「再加个导出 CSV」——不能就地扩 spec,必须:1) 标记当前 spec 为 `paused`,2) 跑一次 `interview-me` 把导出 CSV 当成独立 feature 对齐,3) 在 `feature_list.json` 新增一条 `passes: false` 条目后,作为下一轮阶段二的入口。
 
 ---
 
