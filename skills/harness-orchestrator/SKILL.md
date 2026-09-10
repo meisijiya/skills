@@ -78,6 +78,12 @@ license: MIT
    - 调用 `to-tickets` 把 spec 拆成 tracer-bullet 垂直切片,带 blockers,发布到同一 tracker
 4. **实现 + 评审**:按 ticket 的依赖序工作;每个 ticket 完成后调用 `code-review-and-quality` 走五轴评审,产出 P0/P1 修复清单
 5. **凝练 feature.json 条目**:从 spec 与交付中提炼一条精炼的 feature 描述写回 `feature_list.json`(遵守 `harness-creator` 的字段约定),把该条标记 `passes: true`
+6. **记录该 feature 的 bug 修复(`fix_bug_description`)**——**条件步骤**:
+   - 仅当该 feature 在交付(`passes: true`)之后**确实产生过 bug 且已修复完成**时才写
+   - 字段值必须包含:bug 现象(可复现的输入与实际输出)、根因定位(代码/数据/时序哪一层)、修复动作(改了什么文件/函数/Schema)、回归验证(跑了哪个测试/命令验证不再复现)
+   - **未修复完成的 bug 不写**——避免出现「修复进行中」与「已修复」两种状态混淆
+   - **同 feature 的 bug 后续复现** → 必须**重写或补缺**该 feature 的 `fix_bug_description`,把新现象、新根因、新修复动作并入;不允许只在末尾追加
+
 
 **交接物**(单 feature 完成后):
 
@@ -85,7 +91,7 @@ license: MIT
 - `feature_list.json` 中至少新增一条 `passes: true` 的条目
 - review 的 P0/P1 全部修复或明确接受
 
-**停止条件**:`feature_list.json` 对应条目的 `passes: true`,且无未结 P0 review。
+**停止条件**:`feature_list.json` 对应条目的 `passes: true`,无未结 P0 review,且该 feature 当前所有已知 bug 都已修复并写入了 `fix_bug_description`(未产生过 bug 则字段可缺失,但不得留半成品)。
 
 ---
 
@@ -123,6 +129,8 @@ license: MIT
 - **可执行约束优先于文字说明**:凡是能写成测试、Schema、机器门禁的约束,必须写成可执行形式;文字要求只在无法机器化时使用
 - **领域词随设计立即沉淀**:术语第一次被使用时就更新 `CONTEXT.md`,不要批量补
 - **意图未对齐时不允许写 spec**:`interview-me` 的 95% 确认是 spec 的前置条件,不是后续审查项
+- **`fix_bug_description` 是 feature 的长期补丁账本**:只写已修复完成的 bug;同一 feature 的 bug 复现必须重写或补缺该字段,而不是追加历史;不得把修复中的 bug 提前写入。
+
 
 ---
 
@@ -137,6 +145,8 @@ license: MIT
 | issue tracker 未配置 | `setup-matt-pocock-skills` |
 | 收尾时发现状态文件携带过期内容 | `context-engineering` 剪枝 |
 | 一个会话想跨多个 feature | 跑阶段二循环,不要合并多个 feature 进同一个会话 |
+| 一个 `passes: true` 的 feature 复现了已修复过的 bug | 回到该 feature,重写/补缺 `fix_bug_description`,而不是追加 |
+
 
 ---
 
@@ -172,6 +182,7 @@ license: MIT
 - [ ] 用户已对该 feature 的意图陈述给出明确 yes(走 `interview-me` 或 `grill-with-docs`)
 - [ ] issue tracker 上有 spec + 至少一个 ticket
 - [ ] `feature_list.json` 有对应 `passes: true` 条目
+- [ ] 该 feature 当前所有已知 bug 已修复,`fix_bug_description` 已更新(未产生过 bug 可跳过,但不得留半成品)
 - [ ] review 的 P0 已修复或被明确接受
 
 **收尾**:
