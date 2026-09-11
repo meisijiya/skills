@@ -74,15 +74,22 @@ license: MIT
 2. **写 spec**——必须先做,不可跳过:
    - 调用 `to-spec` 把意图合成 spec 发布到 issue tracker;spec 必须用 `CONTEXT.md` 的术语,尊重 `docs/adr/` 既有决策
    - spec 仅服务本 feature,不在仓库内长期保留——这是**短期 spec**(ephemeral)
+   - **一一映射声明**:`feature_list.json` 中**每一条 feature 对应唯一一个 spec**;ticket 不是 feature 的同义词,而是 spec 的**原子拆分**(tracer-bullet 切片)。不要把多个 feature 合并到同一个 spec,也不要把一个 feature 拆到多个 spec 里。
 3. **拆 tickets**——必须紧跟 spec:
    - 调用 `to-tickets` 把 spec 拆成 tracer-bullet 垂直切片,带 blockers,发布到同一 tracker
 4. **实现 + 评审**:按 ticket 的依赖序工作;每个 ticket 完成后调用 `code-review-and-quality` 走五轴评审,产出 P0/P1 修复清单
+   - **git 提交节奏**(代码即文档,必须遵守):
+     - **spec 定稿**单独一次提交(在 to-spec 后、开始实现前),commit message 含 `spec:` 与 feature 名 / spec id
+     - **实现**按 ticket 提交,每个 ticket 至少一次 commit,commit message 含 `feat:` 与 ticket id
+     - **bug 修复**单独一次提交(不与实现混),commit message 含 `fix:` 与 feature 名 / spec id
+     - 这样 `git log --grep="<feature 名>"` 能串起 spec→实现→bugfix 三段历史
 5. **凝练 feature.json 条目**:从 spec 与交付中提炼一条精炼的 feature 描述写回 `feature_list.json`(遵守 `harness-creator` 的字段约定),把该条标记 `passes: true`
 6. **记录该 feature 的 bug 修复(`fix_bug_description`)**——**条件步骤**:
    - 仅当该 feature 在交付(`passes: true`)之后**确实产生过 bug 且已修复完成**时才写
    - 字段值必须包含:bug 现象(可复现的输入与实际输出)、根因定位(代码/数据/时序哪一层)、修复动作(改了什么文件/函数/Schema)、回归验证(跑了哪个测试/命令验证不再复现)
    - **未修复完成的 bug 不写**——避免出现「修复进行中」与「已修复」两种状态混淆
    - **同 feature 的 bug 后续复现** → 必须**重写或补缺**该 feature 的 `fix_bug_description`,把新现象、新根因、新修复动作并入;不允许只在末尾追加
+   - 该字段引用的 bug 修复 commit 必须在 commit message 里关联 feature 名 / spec id(`fix(<feature>): ...`),确保能从 git log 反查
 
 
 **交接物**(单 feature 完成后):
@@ -130,6 +137,7 @@ license: MIT
 - **领域词随设计立即沉淀**:术语第一次被使用时就更新 `CONTEXT.md`,不要批量补
 - **意图未对齐时不允许写 spec**:`interview-me` 的 95% 确认是 spec 的前置条件,不是后续审查项
 - **`fix_bug_description` 是 feature 的长期补丁账本**:只写已修复完成的 bug;同一 feature 的 bug 复现必须重写或补缺该字段,而不是追加历史;不得把修复中的 bug 提前写入。
+- **feature / spec / ticket / commit 一一映射**:`feature_list.json` 每条 feature 对应唯一 spec;spec 拆 ticket;ticket 提交实现;bug 提交修复。一条 feature 在 git 历史里应能通过 `git log --grep="<feature 名>"` 串起 spec→实现→bugfix 三段。
 
 
 ---
@@ -146,6 +154,7 @@ license: MIT
 | 收尾时发现状态文件携带过期内容 | `context-engineering` 剪枝 |
 | 一个会话想跨多个 feature | 跑阶段二循环,不要合并多个 feature 进同一个会话 |
 | 一个 `passes: true` 的 feature 复现了已修复过的 bug | 回到该 feature,重写/补缺 `fix_bug_description`,而不是追加 |
+| git log 无法通过 feature 名串起 spec / 实现 / bugfix 三段 | 停下补 commit 关联(amend 或加 fixup),而不是继续往前推 |
 
 
 ---
@@ -183,6 +192,7 @@ license: MIT
 - [ ] issue tracker 上有 spec + 至少一个 ticket
 - [ ] `feature_list.json` 有对应 `passes: true` 条目
 - [ ] 该 feature 当前所有已知 bug 已修复,`fix_bug_description` 已更新(未产生过 bug 可跳过,但不得留半成品)
+- [ ] `git log --grep="<feature 名>"` 能串起 spec / 实现 / bugfix 三段(代码即文档)
 - [ ] review 的 P0 已修复或被明确接受
 
 **收尾**:
