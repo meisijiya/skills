@@ -1,6 +1,6 @@
 ---
 name: harness-orchestrator
-description: 编排 harness 上下文治理的三段流水线(冷启动→单 feature→收尾),串起 9 个上游 skill。触发词:启动新项目 / 搭建 harness / 新 feature / 项目收尾 / progress.md 过期 / session-handoff 续写。改名、typo、CI 批处理不要触发。
+description: 编排 harness 三段流水线(冷启动 / 单 feature / 收尾)。触发:启动新项目 / 搭建 harness / 新 feature / 收尾 / progress.md 过期。改名、typo、CI 批处理不触发。
 license: MIT
 ---
 
@@ -57,6 +57,8 @@ license: MIT
 - `CONTEXT.md`(若领域词存在)
 
 **停止条件**:以上六项全部存在且彼此不矛盾——`AGENTS.md` 不与 `CONTEXT.md` 冲突,`feature_list.json` 的当前 feature 与 `progress.md` 的"下一步"一致。
+   - **可观测门禁**:`grep -L "TODO\|FIXME" AGENTS.md CONTEXT.md feature_list.json progress.md` 全部有输出(即无半成品标记);`feature_list.json` 的当前 feature 标题与 `progress.md` 的「下一步」字符串完全匹配(`diff <(jq -r '.features[].title' feature_list.json) <(grep "下一步" progress.md | head -1)`)
+
 
 ---
 
@@ -99,6 +101,8 @@ license: MIT
 - review 的 P0/P1 全部修复或明确接受
 
 **停止条件**:`feature_list.json` 对应条目的 `passes: true`,无未结 P0 review,且该 feature 当前所有已知 bug 都已修复并写入了 `fix_bug_description`(未产生过 bug 则字段可缺失,但不得留半成品)。
+   - **可观测门禁**:`grep -E "P0|P1" <review 输出>` 无未修复 P0;`fix_bug_description` 字段为字符串对象(非数组、非 null),JSON schema 校验通过
+
 
 ---
 
@@ -106,7 +110,8 @@ license: MIT
 
 **目标**:把 harness 状态文件剪枝到"下一棒可立刻接手",剔除过期与冗长历史叙事,保留精炼的事实。
 
-**触发**:对话即将结束、上下文达到 75% 容量、或用户显式说"今天先到这里"。
+**触发**:上下文窗口已用 token 数 ≥ 0.75 × 上限(用 agent 自带的上下文计数器;不可观测时退化为「对话即将结束或用户显式说『今天先到这里』」)
+
 
 **步骤**:
 
