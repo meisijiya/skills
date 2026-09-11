@@ -156,6 +156,17 @@ license: MIT
 | 一个 `passes: true` 的 feature 复现了已修复过的 bug | 回到该 feature,重写/补缺 `fix_bug_description`,而不是追加 |
 | git log 无法通过 feature 名串起 spec / 实现 / bugfix 三段 | 停下补 commit 关联(amend 或加 fixup),而不是继续往前推 |
 
+## 黑名单(明确不要做)
+
+以下动作视为 harness 失序,违反任一条立即停下并修正:
+
+- **不要并行多个 feature**:一个会话只跑一个 feature 的阶段二循环;第二个 feature 必须等当前 feature `passes: true` 后,在下一轮阶段二再开始
+- **不要把进度叙事写进 `AGENTS.md`**:AGENTS.md 是项目级契约,不是会话日志;进度写到 `progress.md`,下一棒从 `session-handoff.md` 接
+- **不要把 ephemeral spec 写进仓库 git 历史**:spec 生命周期已结束后,只留精炼条目在 `feature_list.json`;`docs/specs/` 下的临时 spec 文件应在收尾阶段删除,不随 commit 长期保留
+- **不要在 `feature_list.json` 写半成品 `passes`**:未跑完阶段二停止条件的 feature 一律 `passes: false`
+- **不要把 `fix_bug_description` 写成历史叙事**:只写已修复的 bug;复现必须重写/补缺,不允许追加
+
+
 
 ---
 
@@ -193,6 +204,7 @@ license: MIT
 - [ ] `feature_list.json` 有对应 `passes: true` 条目
 - [ ] 该 feature 当前所有已知 bug 已修复,`fix_bug_description` 已更新(未产生过 bug 可跳过,但不得留半成品)
 - [ ] `git log --grep="<feature 名>"` 能串起 spec / 实现 / bugfix 三段(代码即文档)
+- [ ] 黑名单 5 项自检全过(无并行 feature / AGENTS.md 无进度叙事 / 无 ephemeral spec 残留 / 无半成品 passes / 无 fix_bug_description 追加)
 - [ ] review 的 P0 已修复或被明确接受
 
 **收尾**:
