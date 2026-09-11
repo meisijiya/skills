@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "我刚接手一个新仓库 https://github.com/xxx/yyy,里面啥都没有,我想从头开始做一个 todo list CLI。先帮我搭起来。",
+    "expected": "agent 应先判断是冷启动场景(无 harness),按阶段一执行:setup-matt-pocock-skills → interview-me → harness-creator → domain-modeling,产出六件交接物。不会跳过去直接写代码。"
+  },
+  {
+    "id": 2,
+    "prompt": "我现在在做一个新功能:给这个 CLI 加一个 priority 字段,用户可以设置 high/medium/low 并且能按优先级排序。帮我推进。",
+    "expected": "agent 应判断是单 feature 场景(需要从意图到交付),先调用 interview-me/grill-with-docs 对齐意图,再 to-spec、to-tickets、实现、code-review,最后凝练 feature_list.json 条目。不应该跳过意图对齐直接写 spec。"
+  },
+  {
+    "id": 3,
+    "prompt": "上下文快满了,准备收尾。请把现在的状态收拾一下让下一棒能接手。",
+    "expected": "agent 应触发收尾阶段:context-engineering → harness-creator audit → domain-modeling → 重写 progress.md + session-handoff.md,删除 ephemeral。交付物清单应是精简的事实,不应携带多轮历史叙事。"
+  }
+]

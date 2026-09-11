@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Darwin Skill - harness-orchestrator 优化报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* 主题:Dark Terminal (近黑 + 荧光绿) */
+:root { --bg: #0a0e0a; --card: #0f1410; --fg: #c8e6c1; --muted: #5b8a5b; --accent: #00ff88; --warn: #ffaa00; --bad: #ff5566; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', 'Noto Sans SC', monospace; background: var(--bg); color: var(--fg); padding: 24px; line-height: 1.5; }
+.card { max-width: 960px; margin: 0 auto; background: var(--card); border: 1px solid var(--accent); border-radius: 12px; overflow: hidden; box-shadow: 0 0 40px rgba(0,255,136,0.15); }
+.brand-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px 32px; border-bottom: 1px solid rgba(0,255,136,0.3); background: rgba(0,255,136,0.05); }
+.brand-name { font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
+.brand-name .dot { color: var(--warn); }
+.brand-date { font-size: 13px; color: var(--muted); }
+.hero-section { display: grid; grid-template-columns: 200px 1fr 120px; gap: 32px; padding: 40px 32px; align-items: center; border-bottom: 1px solid rgba(0,255,136,0.2); }
+.ring-container { text-align: center; }
+.ring-score { font-size: 64px; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; }
+.ring-max { font-size: 18px; color: var(--muted); }
+.ring-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+.hero-text h2 { font-size: 13px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.hero-skill-name { font-size: 28px; font-weight: 700; color: var(--fg); }
+.hero-journey { font-size: 14px; color: var(--muted); margin-top: 12px; }
+.hero-journey strong { color: var(--accent); font-weight: 700; }
+.hero-journey .skill-id { color: var(--muted); font-size: 12px; }
+.delta-badge { text-align: center; padding: 16px; border: 2px solid var(--accent); border-radius: 8px; background: rgba(0,255,136,0.1); }
+.delta-badge > span:first-child { display: block; font-size: 32px; font-weight: 900; color: var(--accent); }
+.delta-badge-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; }
+.breakthrough-section { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 32px; border-bottom: 1px solid rgba(0,255,136,0.2); }
+.breakthrough-card { padding: 20px; border: 1px solid rgba(0,255,136,0.3); border-radius: 8px; background: rgba(0,255,136,0.03); }
+.breakthrough-card.secondary { border-color: rgba(255,170,0,0.3); background: rgba(255,170,0,0.03); }
+.breakthrough-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.breakthrough-card.secondary .breakthrough-label { color: var(--warn); }
+.breakthrough-dim { font-size: 20px; font-weight: 700; color: var(--accent); margin: 8px 0; }
+.breakthrough-card.secondary .breakthrough-dim { color: var(--warn); }
+.breakthrough-score-row { font-size: 14px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.breakthrough-from, .breakthrough-to { font-weight: 700; color: var(--fg); }
+.breakthrough-to { color: var(--accent); }
+.breakthrough-card.secondary .breakthrough-to { color: var(--warn); }
+.breakthrough-pct { font-size: 24px; font-weight: 900; color: var(--accent); margin-top: 8px; }
+.breakthrough-card.secondary .breakthrough-pct { color: var(--warn); }
+.breakthrough-story { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+.dims-section { padding: 32px; border-bottom: 1px solid rgba(0,255,136,0.2); }
+.dims-header { font-size: 13px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+.dims-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.dim-cell { padding: 16px; border: 1px solid rgba(0,255,136,0.2); border-radius: 6px; background: rgba(0,255,136,0.02); }
+.dim-name { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.dim-score-row { font-size: 20px; font-weight: 700; color: var(--fg); display: flex; gap: 8px; align-items: baseline; }
+.dim-old-score { font-size: 13px; color: var(--muted); text-decoration: line-through; opacity: 0.6; }
+.dim-arrow { font-size: 12px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-left: auto; }
+.dim-arrow.up-small { color: var(--accent); background: rgba(0,255,136,0.15); }
+.dim-arrow.up-mid { color: var(--accent); background: rgba(0,255,136,0.25); }
+.dim-arrow.up-big { color: var(--accent); background: rgba(0,255,136,0.4); font-size: 14px; }
+.dim-arrow.flat { color: var(--muted); background: rgba(91,138,91,0.2); }
+.timeline-section { padding: 32px; border-bottom: 1px solid rgba(0,255,136,0.2); }
+.timeline-header { font-size: 13px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+.timeline-row { display: grid; grid-template-columns: 100px 1fr 80px; gap: 16px; padding: 12px 0; border-bottom: 1px dashed rgba(0,255,136,0.15); align-items: center; }
+.timeline-row:last-child { border-bottom: none; }
+.timeline-commit { font-family: monospace; font-size: 12px; color: var(--accent); }
+.timeline-desc { font-size: 13px; color: var(--fg); }
+.timeline-desc .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; margin-right: 6px; letter-spacing: 0.5px; }
+.badge-keep { color: var(--accent); background: rgba(0,255,136,0.15); border: 1px solid rgba(0,255,136,0.4); }
+.badge-revert { color: var(--bad); background: rgba(255,85,102,0.15); border: 1px solid rgba(255,85,102,0.4); }
+.badge-fix { color: var(--warn); background: rgba(255,170,0,0.15); border: 1px solid rgba(255,170,0,0.4); }
+.timeline-vote { font-size: 11px; color: var(--muted); text-align: right; }
+.timeline-vote .verdict { color: var(--accent); font-weight: 700; }
+.timeline-vote .verdict.bad { color: var(--bad); }
+.timeline-vote .verdict.warn { color: var(--warn); }
+.summary-section { padding: 32px; }
+.summary-items { display: flex; flex-direction: column; gap: 8px; }
+.summary-item { padding: 12px; border-left: 3px solid var(--accent); background: rgba(0,255,136,0.03); font-size: 13px; color: var(--fg); line-height: 1.6; }
+.footer { padding: 20px 32px; border-top: 1px solid rgba(0,255,136,0.2); display: flex; justify-content: space-between; align-items: center; background: rgba(0,255,136,0.03); }
+.footer-slogan { font-size: 12px; color: var(--muted); font-style: italic; }
+.footer-link { font-size: 12px; color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="brand-bar">
+    <div class="brand-name">Darwin<span class="dot">.</span>skill</div>
+    <div class="brand-date">2026.09.11</div>
+  </div>
+
+  <div class="hero-section">
+    <div class="ring-container">
+      <div>
+        <span class="ring-score">88.5</span><span class="ring-max">/100</span>
+      </div>
+      <div class="ring-label">质量总分</div>
+    </div>
+    <div class="hero-text">
+      <h2>我的Skill进化报告</h2>
+      <div class="hero-skill-name">harness-orchestrator</div>
+      <div class="hero-journey">
+        从 <strong>85.8</strong> 分进化到 <strong>88.5</strong> 分<br>
+        <span class="skill-id">D:/26code/skills/skills/harness-orchestrator</span>
+      </div>
+    </div>
+    <div class="delta-badge">
+      <span>+2.7</span>
+      <span class="delta-badge-label">分</span>
+    </div>
+  </div>
+
+  <div class="breakthrough-section">
+    <div class="breakthrough-card">
+      <div class="breakthrough-label">最大突破</div>
+      <div class="breakthrough-dim">失败模式编码 (dim3)</div>
+      <div class="breakthrough-score-row">
+        <span class="breakthrough-from">8.0</span>
+        <span class="breakthrough-arrow">&rarr;</span>
+        <span class="breakthrough-to">9.0</span>
+      </div>
+      <div class="breakthrough-pct">+12.5%</div>
+      <div class="breakthrough-story">用户纠偏 Round 1 dim3 fallback 方向错误后,Round 2/3 改打「返回值不达停止条件」「scope 漂移」「ephemeral 误入历史」等调用正常但产出异常的失败模式,Round 4 黑名单 5 项一次性封死</div>
+    </div>
+    <div class="breakthrough-card secondary">
+      <div class="breakthrough-label">第二突破</div>
+      <div class="breakthrough-dim">可执行性 (dim5)</div>
+      <div class="breakthrough-score-row">
+        <span class="breakthrough-from">8.5</span>
+        <span class="breakthrough-arrow">&rarr;</span>
+        <span class="breakthrough-to">9.0</span>
+      </div>
+      <div class="breakthrough-pct">+5.9%</div>
+      <div class="breakthrough-story">fix_bug_description 四段式契约(现象/根因/修复/回归)+ feature/spec/ticket/commit 一一映射 + git 提交节奏 spec/feat/fix,代码即文档</div>
+    </div>
+  </div>
+
+  <div class="dims-section">
+    <div class="dims-header">九维度全景</div>
+    <div class="dims-grid">
+      <div class="dim-cell">
+        <div class="dim-name">Frontmatter (dim1)</div>
+        <div class="dim-score-row"><span class="dim-old-score">8.0</span><span class="dim-score">9.0</span></div>
+        <span class="dim-arrow up-mid">+1.0</span>
+      </div>
+      <div class="dim-cell">
+        <div class="dim-name">工作流 (dim2)</div>
+        <div class="dim-score-row"><span class="dim-old-score">9.0</span><span class="dim-score">9.0</span></div>
+        <span class="dim-arrow flat">±0</span>
+      </div>
+      <div class="dim-cell">
+        <div class="dim-name">失败模式 (dim3)</div>
+        <div class="dim-score-row"><span class="dim-old-score">8.0</span><span class="dim-score">9.0</span></div>
+        <span class="dim-arrow up-mid">+1.0</span>
+      </div>
+      <div class="dim-cell">
+        <div class="dim-name">检查点 (dim4)</div>
+        <div class="dim-score-row"><span class="dim-old-score">8.0</span><span class="dim-score">8.5</span></div>
+        <span class="dim-arrow up-small">+0.5</span>
+      </div>
+      <div class="dim-cell">
+        <div class="dim-name">可执行性 (dim5)</div>
+        <div class="dim-score-row"><span class="dim-old-score">8.5</span><span class="dim-score">9.0</span></div>
+        <span class="dim-arrow up-mid">+1.0</span>
+      </div>
+      <div class="dim-cell">
+        <div class="dim-name">资源整合 (dim6)</div>
+        <div class="dim-score-row"><span class="dim-old-score">8.5</span><span class="dim-score">8.5</span></div>
+        <span class="dim-arrow flat">±0</span>
+      </div>
+      <div class="dim-cell">
+        <div class="dim-name">整体架构 (dim7)</div>
+        <div class="dim-score-row"><span class="dim-old-score">9.0</span><span class="dim-score">9.0</span></div>
+        <span class="dim-arrow flat">±0</span>
+      </div>
+      <div class="dim-cell">
+        <div class="dim-name">实测表现 (dim8)</div>
+        <div class="dim-score-row"><span class="dim-old-score">9.0</span><span class="dim-score">9.0</span></div>
+        <span class="dim-arrow flat">±0</span>
+      </div>
+      <div class="dim-cell">
+        <div class="dim-name">反例黑名单 (dim9)</div>
+        <div class="dim-score-row"><span class="dim-old-score">8.0</span><span class="dim-score">9.0</span></div>
+        <span class="dim-arrow up-mid">+1.0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="timeline-section">
+    <div class="timeline-header">5 轮优化轨迹</div>
+    <div class="timeline-row">
+      <div class="timeline-commit">007cc96</div>
+      <div class="timeline-desc"><span class="badge badge-keep">BASELINE</span>初始基线,3 judges 盲评 85.8/100</div>
+      <div class="timeline-vote"><span class="verdict">85.8</span></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-commit">a1abb29</div>
+      <div class="timeline-desc"><span class="badge badge-revert">R1 REVERTED</span>dim3 上游 skill 缺失 fallback,方向错误;用户纠偏</div>
+      <div class="timeline-vote"><span class="verdict bad">reverted</span></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-commit">8e15cd2</div>
+      <div class="timeline-desc">Revert commit(保留可追溯链,符合 darwin 反模式黑名单 #2)</div>
+      <div class="timeline-vote">85.8</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-commit">8ff07ba</div>
+      <div class="timeline-desc"><span class="badge badge-keep">R2 KEEP</span>fix_bug_description 四段式契约 5 处补丁,3-0 better/moderate</div>
+      <div class="timeline-vote"><span class="verdict">3-0 keep</span></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-commit">95fb424</div>
+      <div class="timeline-desc"><span class="badge badge-keep">R3 KEEP</span>feature/spec/ticket/commit 一一映射 + git 提交节奏 6 处,3-0 better/moderate</div>
+      <div class="timeline-vote"><span class="verdict">3-0 keep</span></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-commit">d7e0626</div>
+      <div class="timeline-desc"><span class="badge badge-keep">R4 KEEP</span>黑名单 5 项 + 验证清单自检,3-0 better(clear/small/slight,HL-4 触顶)</div>
+      <div class="timeline-vote"><span class="verdict">3-0 keep</span></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-commit">cfc5855</div>
+      <div class="timeline-desc"><span class="badge badge-fix">R5 PARTIAL</span>description 精简 + 可观测门禁,2 judge 基准错位,1 judge 真实 worse</div>
+      <div class="timeline-vote"><span class="verdict warn">partial</span></div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-commit">d4a7c96</div>
+      <div class="timeline-desc"><span class="badge badge-keep">R5.5 FIX</span>恢复 session-handoff 触发词/当前 passes==false 匹配/[fixed][accepted] 标签/四段式字符串</div>
+      <div class="timeline-vote"><span class="verdict">keep</span></div>
+    </div>
+  </div>
+
+  <div class="summary-section">
+    <div class="dims-header">主要改进摘要</div>
+    <div class="summary-items">
+      <div class="summary-item"><strong>R2 (8ff07ba):</strong>fix_bug_description 编码为 feature 长期补丁账本,只写已修复 bug,同 feature 复现必须重写/补缺不允许追加,5 处交叉编织(阶段二步骤 6 / 停止条件 / 跨阶段不变量 / 反向触发 / 验证清单)</div>
+      <div class="summary-item"><strong>R3 (95fb424):</strong>feature/spec/ticket/commit 一一映射 + git 提交节奏(spec 定稿 → 按 ticket 实现 → bugfix 单独),`git log --grep="<feature 名>"` 能串起三段历史,代码即文档</div>
+      <div class="summary-item"><strong>R4 (d7e0626):</strong>黑名单 5 项显式反模式:不要并行多 feature / 不要把进度叙事写进 AGENTS.md / 不要 ephemeral spec 入 git / 不要半成品 passes / 不要把 fix_bug_description 写成历史叙事</div>
+      <div class="summary-item"><strong>R5+5.5 (cfc5855+d4a7c96):</strong>description 精简到 136 字符(≤200 字符限制),三段停止条件改可观测门禁(jq + grep + JSON schema 校验),75% 容量改 token 比例可计算</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-slogan">Train your Skills like you train your models</div>
+    <a class="footer-link" href="https://github.com/alchaincyf/darwin-skill">github.com/alchaincyf/darwin-skill</a>
+  </div>
+
+</div>
+
+</body>
+</html>
